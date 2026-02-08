@@ -1,0 +1,28 @@
+{
+  "description": "talktome bridge hooks for automatic communication",
+  "hooks": {
+    "SessionStart": [
+      {
+        "matcher": "startup",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "python \"${CLAUDE_PLUGIN_ROOT}/hooks/auto_register.py\"",
+            "timeout": 15
+          }
+        ]
+      }
+    ],
+    "Stop": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "python \"${CLAUDE_PLUGIN_ROOT}/hooks/check_mailbox.py\"",
+            "timeout": 10
+          }
+        ]
+      }
+    ]
+  }
+}
