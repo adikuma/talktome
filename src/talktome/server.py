@@ -1,16 +1,30 @@
+import time
+
 from fastmcp import FastMCP
+from starlette.responses import JSONResponse
 
 from talktome import queue, registry
 
 # shared context store — keyed by (owner, key)
 context_store: dict[tuple[str, str], str] = {}
 
+# activity log — recent events for the dashboard
+activity_log: list[dict] = []
+
 mcp = FastMCP("talktome")
+
+
+def log_activity(event: str, **kwargs: str) -> None:
+    activity_log.append({"event": event, "timestamp": time.time(), **kwargs})
+    # keep only the last 100 events
+    if len(activity_log) > 100:
+        activity_log.pop(0)
 
 
 @mcp.tool()
 async def bridge_register(name: str, path: str) -> dict:
     """register a codebase with the bridge"""
+    log_activity("register", agent=name, path=path)
     return registry.register(name, path)
 
 
@@ -26,6 +40,7 @@ async def bridge_send_message(sender: str, peer: str, message: str) -> str:
     if not registry.is_registered(peer):
         return f"peer '{peer}' not found"
     queue.send(sender, peer, message)
+    log_activity("message", sender=sender, peer=peer)
     return f"message sent to {peer}"
 
 
@@ -50,6 +65,39 @@ async def bridge_get_context(owner: str, key: str) -> str:
         return f"no context '{key}' found for {owner}"
     return value
 
+
+@mcp.custom_route("/health", methods=["GET"])
+async def health(request):
+    return JSONResponse({"status": "ok"})
+
+
+@mcp.custom_route("/peek/{name}", methods=["GET"])
+async def peek(request):
+    name = request.path_params["name"]
+    messages = queue.peek(name)
+    return JSONResponse({"count": len(messages), "messages": messages})
+
+
+@mcp.custom_route("/agents", methods=["GET"])
+async def agents(request):
+    names = registry.list_all()
+    result = []
+    for name in names:
+        entry = registry.get(name)
+        result.append(
+            {
+                "name": name,
+                "path": entry["path"] if entry else "",
+                "status": entry["status"] if entry else "unknown",
+                "mailbox_count": queue.count(name),
+            }
+        )
+    return JSONResponse(result)
+
+
+@mcp.custom_route("/activity", methods=["GET"])
+async def activity(request):
+    return JSONResponse(activity_log)
 
 
 if __name__ == "__main__":
