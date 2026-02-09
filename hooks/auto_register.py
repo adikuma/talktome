@@ -68,18 +68,27 @@ def main():
     with open(identity_file, "w") as f:
         f.write(name)
 
-    # register via the MCP tool (not REST — let claude do it)
-    # we just provide context so claude knows it's connected
+    # register directly via REST
+    payload = json.dumps({"name": name, "path": cwd}).encode()
+    try:
+        req = urllib.request.Request(
+            f"{BRIDGE_URL}/register",
+            data=payload,
+            headers={"Content-Type": "application/json"},
+            method="POST",
+        )
+        urllib.request.urlopen(req, timeout=5)
+    except (urllib.error.URLError, OSError):
+        pass
+
     result = {
         "hookSpecificOutput": {
             "hookEventName": "SessionStart",
             "additionalContext": (
-                f"you are connected to the talktome bridge as '{name}'. "
-                f"bridge tools available: bridge_register, bridge_list_peers, "
-                f"bridge_send_message, bridge_read_mailbox, bridge_share_context, "
-                f"bridge_get_context. call bridge_register('{name}', '{cwd}') "
-                f"to register with the bridge. check your mailbox when doing "
-                f"cross-project work."
+                f"you are registered with the talktome bridge as '{name}'. "
+                f"bridge tools: bridge_list_peers, bridge_send_message, "
+                f"bridge_read_mailbox, bridge_share_context, bridge_get_context. "
+                f"your mailbox is checked automatically when you finish a task."
             ),
         }
     }

@@ -79,6 +79,18 @@ async def peek(request):
     return JSONResponse({"count": len(messages), "messages": messages})
 
 
+@mcp.custom_route("/register", methods=["POST"])
+async def register_rest(request):
+    body = await request.json()
+    name = body.get("name", "")
+    path = body.get("path", "")
+    if not name:
+        return JSONResponse({"error": "name required"}, status_code=400)
+    log_activity("register", agent=name, path=path)
+    entry = registry.register(name, path)
+    return JSONResponse(entry)
+
+
 @mcp.custom_route("/agents", methods=["GET"])
 async def agents(request):
     names = registry.list_all()
