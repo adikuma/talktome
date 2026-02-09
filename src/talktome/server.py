@@ -41,7 +41,7 @@ async def bridge_send_message(sender: str, peer: str, message: str) -> str:
     if not registry.is_registered(peer):
         return f"peer '{peer}' not found"
     queue.send(sender, peer, message)
-    log_activity("message", sender=sender, peer=peer)
+    log_activity("message", sender=sender, peer=peer, content=message)
     return f"message sent to {peer}"
 
 
