@@ -177,3 +177,11 @@ async def test_activity_endpoint(http_client):
     data = resp.json()
     assert len(data) >= 1
     assert data[0]["event"] == "register"
+
+
+@pytest.mark.asyncio
+async def test_dashboard(http_client):
+    resp = await http_client.get("/")
+    assert resp.status_code == 200
+    assert "talktome" in resp.text
+    assert "text/html" in resp.headers["content-type"]

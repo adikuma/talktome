@@ -1,0 +1,613 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>talktome // bridge monitor</title>
+<style>
+@import url('https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@300;400;500;600;700&family=IBM+Plex+Mono:wght@300;400;500;600&display=swap');
+
+*, *::before, *::after { margin: 0; padding: 0; box-sizing: border-box; }
+
+:root {
+  --bg-deep: #0a0a0c;
+  --bg-surface: #0f1014;
+  --bg-raised: #161920;
+  --bg-hover: #1c2029;
+  --border: #1e222b;
+  --border-active: #2a3040;
+  --text-primary: #c8ccd4;
+  --text-secondary: #6b7280;
+  --text-dim: #3d4350;
+  --accent-green: #22c55e;
+  --accent-green-dim: #166534;
+  --accent-green-glow: rgba(34, 197, 94, 0.15);
+  --accent-amber: #f59e0b;
+  --accent-amber-dim: #92400e;
+  --accent-amber-glow: rgba(245, 158, 11, 0.1);
+  --accent-red: #ef4444;
+  --accent-cyan: #06b6d4;
+  --accent-cyan-dim: rgba(6, 182, 212, 0.1);
+  --font-mono: 'JetBrains Mono', 'IBM Plex Mono', monospace;
+  --scanline: repeating-linear-gradient(
+    0deg,
+    transparent,
+    transparent 2px,
+    rgba(0, 0, 0, 0.03) 2px,
+    rgba(0, 0, 0, 0.03) 4px
+  );
+}
+
+html { font-size: 14px; }
+
+body {
+  font-family: var(--font-mono);
+  background: var(--bg-deep);
+  color: var(--text-primary);
+  min-height: 100vh;
+  overflow-x: hidden;
+  position: relative;
+}
+
+body::before {
+  content: '';
+  position: fixed;
+  inset: 0;
+  background: var(--scanline);
+  pointer-events: none;
+  z-index: 9999;
+  opacity: 0.4;
+}
+
+body::after {
+  content: '';
+  position: fixed;
+  inset: 0;
+  background: radial-gradient(ellipse at 50% 0%, rgba(34, 197, 94, 0.03) 0%, transparent 70%);
+  pointer-events: none;
+  z-index: 1;
+}
+
+.container {
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 0 24px;
+  position: relative;
+  z-index: 2;
+}
+
+/* ── header ── */
+
+header {
+  padding: 32px 0 24px;
+  border-bottom: 1px solid var(--border);
+  margin-bottom: 32px;
+}
+
+.header-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.brand {
+  display: flex;
+  align-items: baseline;
+  gap: 12px;
+}
+
+.brand h1 {
+  font-size: 1.5rem;
+  font-weight: 600;
+  letter-spacing: -0.02em;
+  color: var(--text-primary);
+}
+
+.brand h1 span {
+  color: var(--text-dim);
+  font-weight: 300;
+}
+
+.brand-tag {
+  font-size: 0.7rem;
+  color: var(--text-dim);
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+}
+
+.status-cluster {
+  display: flex;
+  align-items: center;
+  gap: 20px;
+}
+
+.health-indicator {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 0.75rem;
+  color: var(--text-secondary);
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
+.health-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: var(--text-dim);
+  transition: background 0.3s, box-shadow 0.3s;
+}
+
+.health-dot.connected {
+  background: var(--accent-green);
+  box-shadow: 0 0 8px var(--accent-green-glow), 0 0 2px var(--accent-green);
+  animation: pulse-dot 3s ease-in-out infinite;
+}
+
+.health-dot.error {
+  background: var(--accent-red);
+  box-shadow: 0 0 8px rgba(239, 68, 68, 0.3);
+}
+
+@keyframes pulse-dot {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.6; }
+}
+
+.clock {
+  font-size: 0.75rem;
+  color: var(--text-dim);
+  font-variant-numeric: tabular-nums;
+}
+
+/* ── grid layout ── */
+
+.grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 24px;
+  margin-bottom: 32px;
+}
+
+@media (max-width: 768px) {
+  .grid { grid-template-columns: 1fr; }
+}
+
+/* ── section panels ── */
+
+.panel {
+  background: var(--bg-surface);
+  border: 1px solid var(--border);
+  border-radius: 4px;
+  overflow: hidden;
+}
+
+.panel-header {
+  padding: 14px 18px;
+  border-bottom: 1px solid var(--border);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.panel-title {
+  font-size: 0.7rem;
+  font-weight: 500;
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+  color: var(--text-secondary);
+}
+
+.panel-count {
+  font-size: 0.7rem;
+  color: var(--text-dim);
+  font-variant-numeric: tabular-nums;
+}
+
+.panel-body {
+  padding: 4px 0;
+  max-height: 420px;
+  overflow-y: auto;
+}
+
+.panel-body::-webkit-scrollbar { width: 4px; }
+.panel-body::-webkit-scrollbar-track { background: transparent; }
+.panel-body::-webkit-scrollbar-thumb { background: var(--border-active); border-radius: 2px; }
+
+.panel-empty {
+  padding: 40px 18px;
+  text-align: center;
+  color: var(--text-dim);
+  font-size: 0.8rem;
+}
+
+.panel-empty .empty-line {
+  margin-bottom: 4px;
+}
+
+/* ── agent cards ── */
+
+.agent-card {
+  padding: 14px 18px;
+  border-bottom: 1px solid var(--border);
+  transition: background 0.15s;
+  cursor: default;
+}
+
+.agent-card:last-child { border-bottom: none; }
+.agent-card:hover { background: var(--bg-hover); }
+
+.agent-top {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 8px;
+}
+
+.agent-name {
+  font-size: 0.9rem;
+  font-weight: 600;
+  color: var(--text-primary);
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.agent-status-pip {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: var(--accent-green);
+  box-shadow: 0 0 6px var(--accent-green-glow);
+}
+
+.agent-status-pip.inactive {
+  background: var(--text-dim);
+  box-shadow: none;
+}
+
+.agent-mailbox {
+  font-size: 0.75rem;
+  font-variant-numeric: tabular-nums;
+  padding: 2px 8px;
+  border-radius: 2px;
+  background: var(--bg-raised);
+  border: 1px solid var(--border);
+  color: var(--text-secondary);
+}
+
+.agent-mailbox.has-mail {
+  color: var(--accent-amber);
+  border-color: var(--accent-amber-dim);
+  background: var(--accent-amber-glow);
+}
+
+.agent-path {
+  font-size: 0.75rem;
+  color: var(--text-dim);
+}
+
+/* ── activity feed ── */
+
+.activity-item {
+  padding: 10px 18px;
+  border-bottom: 1px solid var(--border);
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+  font-size: 0.8rem;
+  transition: background 0.15s;
+}
+
+.activity-item:last-child { border-bottom: none; }
+.activity-item:hover { background: var(--bg-hover); }
+
+.activity-time {
+  color: var(--text-dim);
+  font-variant-numeric: tabular-nums;
+  flex-shrink: 0;
+  font-size: 0.7rem;
+  padding-top: 1px;
+  min-width: 56px;
+}
+
+.activity-type {
+  flex-shrink: 0;
+  font-size: 0.65rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  padding: 1px 6px;
+  border-radius: 2px;
+  min-width: 48px;
+  text-align: center;
+}
+
+.activity-type.register {
+  color: var(--accent-cyan);
+  background: var(--accent-cyan-dim);
+}
+
+.activity-type.message {
+  color: var(--accent-green);
+  background: var(--accent-green-glow);
+}
+
+.activity-desc {
+  color: var(--text-secondary);
+  line-height: 1.4;
+}
+
+.activity-desc strong {
+  color: var(--text-primary);
+  font-weight: 500;
+}
+
+.activity-desc .arrow {
+  color: var(--text-dim);
+  margin: 0 2px;
+}
+
+/* ── bottom bar ── */
+
+.bottom-bar {
+  padding: 16px 0 24px;
+  border-top: 1px solid var(--border);
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  font-size: 0.7rem;
+  color: var(--text-dim);
+}
+
+.refresh-indicator {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.refresh-bar {
+  width: 40px;
+  height: 2px;
+  background: var(--border);
+  border-radius: 1px;
+  overflow: hidden;
+}
+
+.refresh-bar-fill {
+  height: 100%;
+  background: var(--accent-green-dim);
+  border-radius: 1px;
+  width: 0%;
+  transition: width 0.1s linear;
+}
+
+/* ── fade-in animation ── */
+
+@keyframes fade-in {
+  from { opacity: 0; transform: translateY(4px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+.fade-in {
+  animation: fade-in 0.3s ease-out forwards;
+  opacity: 0;
+}
+</style>
+</head>
+<body>
+
+<div class="container">
+  <header>
+    <div class="header-row">
+      <div class="brand">
+        <h1>talktome <span>// bridge</span></h1>
+        <span class="brand-tag">monitor</span>
+      </div>
+      <div class="status-cluster">
+        <div class="health-indicator">
+          <div class="health-dot" id="health-dot"></div>
+          <span id="health-label">connecting</span>
+        </div>
+        <div class="clock" id="clock">--:--:--</div>
+      </div>
+    </div>
+  </header>
+
+  <div class="grid">
+    <div class="panel">
+      <div class="panel-header">
+        <span class="panel-title">connected agents</span>
+        <span class="panel-count" id="agent-count">0</span>
+      </div>
+      <div class="panel-body" id="agents-list">
+        <div class="panel-empty">
+          <div class="empty-line">no agents connected</div>
+          <div>waiting for registrations...</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="panel">
+      <div class="panel-header">
+        <span class="panel-title">activity feed</span>
+        <span class="panel-count" id="activity-count">0</span>
+      </div>
+      <div class="panel-body" id="activity-list">
+        <div class="panel-empty">
+          <div class="empty-line">no activity yet</div>
+          <div>waiting for events...</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="bottom-bar">
+    <div class="refresh-indicator">
+      <div class="refresh-bar">
+        <div class="refresh-bar-fill" id="refresh-bar"></div>
+      </div>
+      <span>polling every 3s</span>
+    </div>
+    <span id="last-update">--</span>
+  </div>
+</div>
+
+<script>
+const POLL_INTERVAL = 3000;
+let refreshStart = Date.now();
+
+function formatTime(ts) {
+  const d = new Date(ts * 1000);
+  const h = String(d.getHours()).padStart(2, '0');
+  const m = String(d.getMinutes()).padStart(2, '0');
+  const s = String(d.getSeconds()).padStart(2, '0');
+  return `${h}:${m}:${s}`;
+}
+
+function formatTimeAgo(ts) {
+  const diff = Math.floor(Date.now() / 1000 - ts);
+  if (diff < 5) return 'just now';
+  if (diff < 60) return `${diff}s ago`;
+  if (diff < 3600) return `${Math.floor(diff / 60)}m ago`;
+  return `${Math.floor(diff / 3600)}h ago`;
+}
+
+function updateClock() {
+  const now = new Date();
+  const h = String(now.getHours()).padStart(2, '0');
+  const m = String(now.getMinutes()).padStart(2, '0');
+  const s = String(now.getSeconds()).padStart(2, '0');
+  document.getElementById('clock').textContent = `${h}:${m}:${s}`;
+}
+
+function updateRefreshBar() {
+  const elapsed = Date.now() - refreshStart;
+  const pct = Math.min((elapsed / POLL_INTERVAL) * 100, 100);
+  document.getElementById('refresh-bar').style.width = pct + '%';
+  requestAnimationFrame(updateRefreshBar);
+}
+
+async function fetchJSON(url) {
+  try {
+    const resp = await fetch(url);
+    if (!resp.ok) throw new Error(resp.status);
+    return await resp.json();
+  } catch (e) {
+    return null;
+  }
+}
+
+async function updateHealth() {
+  const data = await fetchJSON('/health');
+  const dot = document.getElementById('health-dot');
+  const label = document.getElementById('health-label');
+  if (data && data.status === 'ok') {
+    dot.className = 'health-dot connected';
+    label.textContent = 'connected';
+  } else {
+    dot.className = 'health-dot error';
+    label.textContent = 'offline';
+  }
+}
+
+async function updateAgents() {
+  const data = await fetchJSON('/agents');
+  const container = document.getElementById('agents-list');
+  const countEl = document.getElementById('agent-count');
+
+  if (!data || data.length === 0) {
+    container.innerHTML = `
+      <div class="panel-empty">
+        <div class="empty-line">no agents connected</div>
+        <div>waiting for registrations...</div>
+      </div>`;
+    countEl.textContent = '0';
+    return;
+  }
+
+  countEl.textContent = data.length;
+  container.innerHTML = data.map((agent, i) => `
+    <div class="agent-card fade-in" style="animation-delay: ${i * 50}ms">
+      <div class="agent-top">
+        <div class="agent-name">
+          <div class="agent-status-pip ${agent.status === 'active' ? '' : 'inactive'}"></div>
+          ${escapeHtml(agent.name)}
+        </div>
+        <div class="agent-mailbox ${agent.mailbox_count > 0 ? 'has-mail' : ''}">
+          ${agent.mailbox_count} msg${agent.mailbox_count !== 1 ? 's' : ''}
+        </div>
+      </div>
+      <div class="agent-path">${escapeHtml(agent.path)}</div>
+    </div>
+  `).join('');
+}
+
+async function updateActivity() {
+  const data = await fetchJSON('/activity');
+  const container = document.getElementById('activity-list');
+  const countEl = document.getElementById('activity-count');
+
+  if (!data || data.length === 0) {
+    container.innerHTML = `
+      <div class="panel-empty">
+        <div class="empty-line">no activity yet</div>
+        <div>waiting for events...</div>
+      </div>`;
+    countEl.textContent = '0';
+    return;
+  }
+
+  countEl.textContent = data.length;
+  const reversed = [...data].reverse();
+  container.innerHTML = reversed.map((item, i) => {
+    const time = formatTime(item.timestamp);
+    const ago = formatTimeAgo(item.timestamp);
+
+    if (item.event === 'register') {
+      return `
+        <div class="activity-item fade-in" style="animation-delay: ${i * 30}ms">
+          <span class="activity-time" title="${time}">${ago}</span>
+          <span class="activity-type register">join</span>
+          <span class="activity-desc"><strong>${escapeHtml(item.agent)}</strong> registered at ${escapeHtml(item.path || '')}</span>
+        </div>`;
+    }
+    if (item.event === 'message') {
+      return `
+        <div class="activity-item fade-in" style="animation-delay: ${i * 30}ms">
+          <span class="activity-time" title="${time}">${ago}</span>
+          <span class="activity-type message">msg</span>
+          <span class="activity-desc"><strong>${escapeHtml(item.sender)}</strong> <span class="arrow">-></span> <strong>${escapeHtml(item.peer)}</strong></span>
+        </div>`;
+    }
+    return '';
+  }).join('');
+}
+
+function escapeHtml(str) {
+  if (!str) return '';
+  const div = document.createElement('div');
+  div.textContent = str;
+  return div.innerHTML;
+}
+
+async function poll() {
+  refreshStart = Date.now();
+  await Promise.all([updateHealth(), updateAgents(), updateActivity()]);
+  const now = new Date();
+  const h = String(now.getHours()).padStart(2, '0');
+  const m = String(now.getMinutes()).padStart(2, '0');
+  const s = String(now.getSeconds()).padStart(2, '0');
+  document.getElementById('last-update').textContent = `last update ${h}:${m}:${s}`;
+}
+
+setInterval(updateClock, 1000);
+updateClock();
+updateRefreshBar();
+poll();
+setInterval(poll, POLL_INTERVAL);
+</script>
+
+</body>
+</html>

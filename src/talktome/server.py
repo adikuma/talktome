@@ -1,7 +1,8 @@
 import time
+from pathlib import Path
 
 from fastmcp import FastMCP
-from starlette.responses import JSONResponse
+from starlette.responses import HTMLResponse, JSONResponse
 
 from talktome import queue, registry
 
@@ -98,6 +99,12 @@ async def agents(request):
 @mcp.custom_route("/activity", methods=["GET"])
 async def activity(request):
     return JSONResponse(activity_log)
+
+
+@mcp.custom_route("/", methods=["GET"])
+async def dashboard(request):
+    html_path = Path(__file__).parent / "dashboard.html"
+    return HTMLResponse(html_path.read_text(encoding="utf-8"))
 
 
 if __name__ == "__main__":
