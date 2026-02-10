@@ -1,7 +1,7 @@
 [project]
 name = "talktome"
 version = "0.1.0"
-description = "Add your description here"
+description = "real-time bridge for cross-project claude code communication"
 readme = "README.md"
 authors = [
     { name = "Aditya Kumar", email = "adityakuma0308@gmail.com" }

@@ -4,7 +4,7 @@ import sys
 import urllib.error
 import urllib.request
 
-BRIDGE_URL = os.environ.get("TALKTOME_URL", "http://localhost:3456")
+BRIDGE_URL = os.environ.get("TALKTOME_URL", "http://127.0.0.1:3456")
 
 
 def main():

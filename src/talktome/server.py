@@ -1,31 +1,17 @@
-import time
 from pathlib import Path
 
 from fastmcp import FastMCP
 from starlette.responses import HTMLResponse, JSONResponse
 
-from talktome import queue, registry
-
-# shared context store — keyed by (owner, key)
-context_store: dict[tuple[str, str], str] = {}
-
-# activity log — recent events for the dashboard
-activity_log: list[dict] = []
+from talktome import db, queue, registry
 
 mcp = FastMCP("talktome")
-
-
-def log_activity(event: str, **kwargs: str) -> None:
-    activity_log.append({"event": event, "timestamp": time.time(), **kwargs})
-    # keep only the last 100 events
-    if len(activity_log) > 100:
-        activity_log.pop(0)
 
 
 @mcp.tool()
 async def bridge_register(name: str, path: str) -> dict:
     """register a codebase with the bridge"""
-    log_activity("register", agent=name, path=path)
+    db.log_activity("register", agent=name, path=path)
     return registry.register(name, path)
 
 
@@ -41,7 +27,7 @@ async def bridge_send_message(sender: str, peer: str, message: str) -> str:
     if not registry.is_registered(peer):
         return f"peer '{peer}' not found"
     queue.send(sender, peer, message)
-    log_activity("message", sender=sender, peer=peer, content=message)
+    db.log_activity("message", sender=sender, peer=peer, content=message)
     return f"message sent to {peer}"
 
 
@@ -54,14 +40,14 @@ async def bridge_read_mailbox(name: str) -> list[dict]:
 @mcp.tool()
 async def bridge_share_context(owner: str, key: str, value: str) -> str:
     """push a piece of context that other peers can read"""
-    context_store[(owner, key)] = value
+    db.set_context(owner, key, value)
     return f"context '{key}' stored for {owner}"
 
 
 @mcp.tool()
 async def bridge_get_context(owner: str, key: str) -> str:
     """pull a piece of context from a peer"""
-    value = context_store.get((owner, key))
+    value = db.get_context(owner, key)
     if value is None:
         return f"no context '{key}' found for {owner}"
     return value
@@ -86,7 +72,7 @@ async def register_rest(request):
     path = body.get("path", "")
     if not name:
         return JSONResponse({"error": "name required"}, status_code=400)
-    log_activity("register", agent=name, path=path)
+    db.log_activity("register", agent=name, path=path)
     entry = registry.register(name, path)
     return JSONResponse(entry)
 
@@ -110,13 +96,55 @@ async def agents(request):
 
 @mcp.custom_route("/activity", methods=["GET"])
 async def activity(request):
-    return JSONResponse(activity_log)
+    return JSONResponse(db.get_activity())
 
 
 @mcp.custom_route("/", methods=["GET"])
 async def dashboard(request):
     html_path = Path(__file__).parent / "dashboard.html"
     return HTMLResponse(html_path.read_text(encoding="utf-8"))
+
+
+@mcp.custom_route("/send", methods=["POST"])
+async def send_rest(request):
+    body = await request.json()
+    sender = body.get("sender", "")
+    peer = body.get("peer", "")
+    message = body.get("message", "")
+    if not peer:
+        return JSONResponse({"error": "peer required"}, status_code=400)
+    if not registry.is_registered(peer):
+        return JSONResponse({"result": f"peer '{peer}' not found"})
+    queue.send(sender, peer, message)
+    db.log_activity("message", sender=sender, peer=peer, content=message)
+    return JSONResponse({"result": f"message sent to {peer}"})
+
+
+@mcp.custom_route("/read/{name}", methods=["GET"])
+async def read_rest(request):
+    name = request.path_params["name"]
+    messages = queue.read(name)
+    return JSONResponse(messages)
+
+
+@mcp.custom_route("/context", methods=["POST"])
+async def context_store_rest(request):
+    body = await request.json()
+    owner = body.get("owner", "")
+    key = body.get("key", "")
+    value = body.get("value", "")
+    db.set_context(owner, key, value)
+    return JSONResponse({"result": f"context '{key}' stored for {owner}"})
+
+
+@mcp.custom_route("/context/{owner}/{key}", methods=["GET"])
+async def context_get_rest(request):
+    owner = request.path_params["owner"]
+    key = request.path_params["key"]
+    value = db.get_context(owner, key)
+    if value is None:
+        return JSONResponse({"error": f"no context '{key}' found for {owner}"})
+    return JSONResponse({"value": value})
 
 
 if __name__ == "__main__":

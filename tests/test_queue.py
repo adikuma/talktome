@@ -1,8 +1,8 @@
-from talktome import queue
+from talktome import db, queue
 
 
 def setup_function():
-    queue.mailboxes.clear()
+    db.reset()
 
 
 def test_send_creates_mailbox():

@@ -1,9 +1,9 @@
-from talktome import registry
+from talktome import db, registry
 
 
 # clear state between tests
 def setup_function():
-    registry.agents.clear()
+    db.reset()
 
 
 def test_register_creates_entry():

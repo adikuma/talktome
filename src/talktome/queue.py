@@ -1,44 +1,23 @@
-import time
+from talktome import db
 
-mailboxes: dict[str, list[dict]] = {}
-
-
-# when a message is sent we add it to the mailbox of the receiver
-def send(sender_agent: str, receiver_agent: str, message: str) -> dict:
-    entry = {"from": sender_agent, "message": message, "timestamp": time.time()}
-    if receiver_agent not in mailboxes:
-        mailboxes[receiver_agent] = []
-    mailboxes[receiver_agent].append(entry)
-    return entry
+# thin wrapper — delegates to sqlite-backed db module
 
 
-# read the messages for an agent
-def read(agent: str) -> list[dict]:
-    if agent not in mailboxes:
-        return []
-    messages = mailboxes[agent]
-    # the idea is to drain the mailbox once the agent has read them
-    mailboxes[agent] = []
-    return messages
+def send(sender_agent, receiver_agent, message):
+    return db.send_message(sender_agent, receiver_agent, message)
 
 
-# read the messages without clearing them
-def peek(agent: str) -> list[dict]:
-    if agent not in mailboxes:
-        return []
-    return mailboxes[agent]
+def read(agent):
+    return db.read_messages(agent)
 
 
-# clear the mailbox of the agent
-def clear(agent: str) -> bool:
-    if agent not in mailboxes:
-        return False
-    mailboxes[agent] = []
-    return True
+def peek(agent):
+    return db.peek_messages(agent)
 
 
-# count
-def count(agent: str) -> int:
-    if agent not in mailboxes:
-        return 0
-    return len(mailboxes[agent])
+def clear(agent):
+    return db.clear_messages(agent)
+
+
+def count(agent):
+    return db.message_count(agent)

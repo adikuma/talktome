@@ -7,7 +7,7 @@ import urllib.error
 import urllib.request
 
 # auto-starts bridge server and registers this codebase
-BRIDGE_URL = os.environ.get("TALKTOME_URL", "http://localhost:3456")
+BRIDGE_URL = os.environ.get("TALKTOME_URL", "http://127.0.0.1:3456")
 TALKTOME_DIR = os.environ.get(
     "TALKTOME_DIR",
     os.path.dirname(os.path.dirname(os.path.abspath(__file__))),
@@ -87,8 +87,13 @@ def main():
             "additionalContext": (
                 f"you are registered with the talktome bridge as '{name}'. "
                 f"bridge tools: bridge_list_peers, bridge_send_message, "
-                f"bridge_read_mailbox, bridge_share_context, bridge_get_context. "
-                f"your mailbox is checked automatically when you finish a task."
+                f"bridge_read_mailbox, bridge_wait_for_reply, "
+                f"bridge_share_context, bridge_get_context. "
+                f"your mailbox is checked automatically before every action "
+                f"and when you receive a prompt. incoming messages appear as "
+                f"context — read them with bridge_read_mailbox('{name}') and "
+                f"respond via bridge_send_message. use bridge_wait_for_reply "
+                f"to send a message and wait for a response in one turn."
             ),
         }
     }

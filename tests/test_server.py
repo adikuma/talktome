@@ -3,16 +3,13 @@ import pytest_asyncio
 from fastmcp import Client
 from httpx import ASGITransport, AsyncClient
 
-from talktome import queue, registry
-from talktome.server import activity_log, context_store, mcp
+from talktome import db, queue, registry
+from talktome.server import mcp
 
 
 @pytest.fixture(autouse=True)
 def clear_state():
-    registry.agents.clear()
-    queue.mailboxes.clear()
-    context_store.clear()
-    activity_log.clear()
+    db.reset()
 
 
 @pytest.mark.asyncio
@@ -185,3 +182,97 @@ async def test_dashboard(http_client):
     assert resp.status_code == 200
     assert "talktome" in resp.text
     assert "text/html" in resp.headers["content-type"]
+
+
+@pytest.mark.asyncio
+async def test_send_rest(http_client):
+    registry.register("alice", "/a")
+    registry.register("bob", "/b")
+    resp = await http_client.post(
+        "/send", json={"sender": "alice", "peer": "bob", "message": "hey"}
+    )
+    assert resp.status_code == 200
+    assert "sent" in resp.json()["result"]
+    assert queue.count("bob") == 1
+
+
+@pytest.mark.asyncio
+async def test_send_rest_unknown_peer(http_client):
+    resp = await http_client.post(
+        "/send", json={"sender": "alice", "peer": "nobody", "message": "hey"}
+    )
+    assert "not found" in resp.json()["result"]
+
+
+@pytest.mark.asyncio
+async def test_send_rest_missing_peer(http_client):
+    resp = await http_client.post(
+        "/send", json={"sender": "alice", "peer": "", "message": "hey"}
+    )
+    assert resp.status_code == 400
+
+
+@pytest.mark.asyncio
+async def test_read_rest(http_client):
+    queue.send("alice", "bob", "hello")
+    queue.send("alice", "bob", "world")
+    resp = await http_client.get("/read/bob")
+    data = resp.json()
+    assert len(data) == 2
+    assert data[0]["message"] == "hello"
+    # read drains the mailbox
+    assert queue.count("bob") == 0
+
+
+@pytest.mark.asyncio
+async def test_read_rest_empty(http_client):
+    resp = await http_client.get("/read/nobody")
+    assert resp.json() == []
+
+
+@pytest.mark.asyncio
+async def test_context_store_rest(http_client):
+    resp = await http_client.post(
+        "/context", json={"owner": "alice", "key": "url", "value": "/api/v1"}
+    )
+    assert "stored" in resp.json()["result"]
+
+
+@pytest.mark.asyncio
+async def test_context_get_rest(http_client):
+    resp = await http_client.post(
+        "/context", json={"owner": "alice", "key": "url", "value": "/api/v1"}
+    )
+    assert resp.status_code == 200
+    resp = await http_client.get("/context/alice/url")
+    assert resp.json()["value"] == "/api/v1"
+
+
+@pytest.mark.asyncio
+async def test_context_get_rest_not_found(http_client):
+    resp = await http_client.get("/context/alice/nope")
+    assert "error" in resp.json()
+
+
+@pytest.mark.asyncio
+async def test_wait_for_reply_via_peek_and_read(http_client):
+    registry.register("alice", "/a")
+    registry.register("bob", "/b")
+    # peek shows empty initially
+    resp = await http_client.get("/peek/bob")
+    assert resp.json()["count"] == 0
+    # send a message
+    queue.send("alice", "bob", "ping")
+    # peek shows 1 message (non-draining)
+    resp = await http_client.get("/peek/bob")
+    assert resp.json()["count"] == 1
+    assert resp.json()["messages"][0]["message"] == "ping"
+    # peek again - still there (not drained)
+    resp = await http_client.get("/peek/bob")
+    assert resp.json()["count"] == 1
+    # read drains it
+    resp = await http_client.get("/read/bob")
+    assert len(resp.json()) == 1
+    # now peek shows empty
+    resp = await http_client.get("/peek/bob")
+    assert resp.json()["count"] == 0

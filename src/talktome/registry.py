@@ -1,63 +1,35 @@
-import time
+from talktome import db
 
-# the bridge needs to remember which agents are connected
-agents: dict[str, dict] = {}
-
-
-# register an agent with the bridge
-def register(name: str, path: str, metadata: dict | None = None) -> dict:
-    entry = {
-        "name": name,
-        "path": path,
-        "status": "active",
-        "registered_at": time.time(),
-        "last_seen": time.time(),
-        "metadata": metadata or {},
-    }
-    agents[name] = entry
-    return entry
+# thin wrapper — delegates to sqlite-backed db module
 
 
-# deregister an agent from the bridge
-def deregister(name: str) -> bool:
-    if name in agents:
-        del agents[name]
-        return True
-    return False
+def register(name, path, metadata=None):
+    return db.register(name, path, metadata)
 
 
-# get an agent's information
-def get(name: str) -> dict | None:
-    return agents.get(name, None)
+def deregister(name):
+    return db.deregister(name)
 
 
-# list all registered agents
-def list_all() -> list[dict]:
-    return list(agents.keys())
+def get(name):
+    return db.get_agent(name)
 
 
-# update an agent's status and last seen time
-def update_status(name: str, status: str) -> bool:
-    if name in agents:
-        agents[name]["status"] = status
-        agents[name]["last_seen"] = time.time()
-        return True
-    return False
+def list_all():
+    return db.list_agents()
 
 
-# update an agent's metadata
-def update_metadata(name: str, metadata: dict) -> bool:
-    if name in agents:
-        agents[name]["metadata"] = metadata
-        return True
-    return False
+def update_status(name, status):
+    return db.update_status(name, status)
 
 
-# whether an agent is registered
-def is_registered(name: str) -> bool:
-    return name in agents
+def update_metadata(name, metadata):
+    return db.update_metadata(name, metadata)
 
 
-# count the number of registered agents
-def count() -> int:
-    return len(agents)
+def is_registered(name):
+    return db.is_registered(name)
+
+
+def count():
+    return db.agent_count()
