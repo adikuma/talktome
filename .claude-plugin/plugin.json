@@ -9,6 +9,5 @@
   "repository": "https://github.com/adikuma/talktome",
   "license": "MIT",
   "keywords": ["communication", "bridge", "multi-agent", "messaging", "cross-project"],
-  "hooks": "./hooks/hooks.json",
   "mcpServers": "./.mcp.json"
 }

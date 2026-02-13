@@ -56,6 +56,7 @@ def init():
 
 # --- registry operations ---
 
+
 def register(name, path, metadata=None):
     now = time.time()
     entry = {
@@ -152,6 +153,7 @@ def agent_count():
 
 # --- queue operations ---
 
+
 def send_message(sender, receiver, message):
     now = time.time()
     entry = {"from": sender, "message": message, "timestamp": now}
@@ -178,7 +180,10 @@ def read_messages(agent):
     )
     conn.commit()
     conn.close()
-    return [{"from": r["sender"], "message": r["message"], "timestamp": r["timestamp"]} for r in rows]
+    return [
+        {"from": r["sender"], "message": r["message"], "timestamp": r["timestamp"]}
+        for r in rows
+    ]
 
 
 def peek_messages(agent):
@@ -188,7 +193,10 @@ def peek_messages(agent):
         (agent,),
     ).fetchall()
     conn.close()
-    return [{"from": r["sender"], "message": r["message"], "timestamp": r["timestamp"]} for r in rows]
+    return [
+        {"from": r["sender"], "message": r["message"], "timestamp": r["timestamp"]}
+        for r in rows
+    ]
 
 
 def clear_messages(agent):
@@ -215,6 +223,7 @@ def message_count(agent):
 
 # --- context operations ---
 
+
 def set_context(owner, key, value):
     conn = _connect()
     conn.execute(
@@ -239,6 +248,7 @@ def get_context(owner, key):
 
 
 # --- activity operations ---
+
 
 def log_activity(event, **kwargs):
     conn = _connect()
@@ -271,6 +281,7 @@ def get_activity():
 
 
 # --- test helper ---
+
 
 def reset():
     conn = _connect()

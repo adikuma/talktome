@@ -94,7 +94,8 @@ async def bridge_list_peers() -> list:
 async def bridge_send_message(sender: str, peer: str, message: str) -> str:
     """send an async message to a peer codebase's mailbox"""
     result = call_bridge(
-        "/send", method="POST",
+        "/send",
+        method="POST",
         data={"sender": sender, "peer": peer, "message": message},
     )
     return result.get("result", str(result))
@@ -113,7 +114,8 @@ async def bridge_read_mailbox(name: str) -> list[dict]:
 async def bridge_share_context(owner: str, key: str, value: str) -> str:
     """push a piece of context that other peers can read"""
     result = call_bridge(
-        "/context", method="POST",
+        "/context",
+        method="POST",
         data={"owner": owner, "key": key, "value": value},
     )
     return result.get("result", str(result))

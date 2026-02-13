@@ -1,386 +1,486 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="en">
-<head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>talktome</title>
-<style>
-@import url('https://fonts.googleapis.com/css2?family=JetBrains+Mono:ital,wght@0,200;0,300;0,400;0,500;0,600;0,700;1,300;1,400&display=swap');
+    <head>
+        <meta charset="UTF-8" />
+        <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+        <title>talktome</title>
+        <style>
+            @import url("https://fonts.googleapis.com/css2?family=JetBrains+Mono:ital,wght@0,200;0,300;0,400;0,500;0,600;0,700;1,300;1,400&display=swap");
 
-*, *::before, *::after { margin: 0; padding: 0; box-sizing: border-box; }
+            *,
+            *::before,
+            *::after {
+                margin: 0;
+                padding: 0;
+                box-sizing: border-box;
+            }
 
-:root {
-  --bg: #000;
-  --white: #fff;
-  --t1: rgba(255,255,255,0.92);
-  --t2: rgba(255,255,255,0.55);
-  --t3: rgba(255,255,255,0.28);
-  --t4: rgba(255,255,255,0.12);
-  --t5: rgba(255,255,255,0.06);
-  --t6: rgba(255,255,255,0.03);
-  --font: 'JetBrains Mono', monospace;
-}
+            :root {
+                --bg: #000;
+                --white: #fff;
+                --t1: rgba(255, 255, 255, 0.92);
+                --t2: rgba(255, 255, 255, 0.55);
+                --t3: rgba(255, 255, 255, 0.28);
+                --t4: rgba(255, 255, 255, 0.12);
+                --t5: rgba(255, 255, 255, 0.06);
+                --t6: rgba(255, 255, 255, 0.03);
+                --font: "JetBrains Mono", monospace;
+            }
 
-html { font-size: 15px; }
+            html {
+                font-size: 15px;
+            }
 
-body {
-  font-family: var(--font);
-  background: var(--bg);
-  color: var(--t1);
-  min-height: 100vh;
-  -webkit-font-smoothing: antialiased;
-}
+            body {
+                font-family: var(--font);
+                background: var(--bg);
+                color: var(--t1);
+                min-height: 100vh;
+                -webkit-font-smoothing: antialiased;
+            }
 
-::-webkit-scrollbar { width: 0; }
+            ::-webkit-scrollbar {
+                width: 0;
+            }
 
-.shell {
-  max-width: 1280px;
-  margin: 0 auto;
-  padding: 0 56px;
-}
+            .shell {
+                max-width: 1280px;
+                margin: 0 auto;
+                padding: 0 56px;
+            }
 
-/* header */
-.head {
-  padding: 52px 0 0;
-  margin-bottom: 64px;
-  display: flex;
-  align-items: flex-end;
-  justify-content: space-between;
-}
+            /* header */
+            .head {
+                padding: 52px 0 0;
+                margin-bottom: 64px;
+                display: flex;
+                align-items: flex-end;
+                justify-content: space-between;
+            }
 
-.logo {
-  font-size: 1.2rem;
-  font-weight: 300;
-  color: var(--t1);
-  letter-spacing: 0.08em;
-  text-transform: lowercase;
-}
+            .logo {
+                font-size: 1.2rem;
+                font-weight: 300;
+                color: var(--t1);
+                letter-spacing: 0.08em;
+                text-transform: lowercase;
+            }
 
-.status {
-  display: flex;
-  align-items: center;
-  gap: 12px;
-}
+            .status {
+                display: flex;
+                align-items: center;
+                gap: 12px;
+            }
 
-.status-text {
-  font-size: 0.6875rem;
-  font-weight: 400;
-  letter-spacing: 0.14em;
-  text-transform: uppercase;
-  color: var(--t3);
-  transition: color 0.6s ease;
-}
+            .status-text {
+                font-size: 0.6875rem;
+                font-weight: 400;
+                letter-spacing: 0.14em;
+                text-transform: uppercase;
+                color: var(--t3);
+                transition: color 0.6s ease;
+            }
 
-.status-text.on { color: #34d399; }
+            .status-text.on {
+                color: #34d399;
+            }
 
-.tick-bar {
-  width: 40px;
-  height: 1px;
-  background: var(--t5);
-  overflow: hidden;
-}
+            .tick-bar {
+                width: 40px;
+                height: 1px;
+                background: var(--t5);
+                overflow: hidden;
+            }
 
-.tick-fill {
-  height: 100%;
-  width: 0%;
-  background: var(--t3);
-}
+            .tick-fill {
+                height: 100%;
+                width: 0%;
+                background: var(--t3);
+            }
 
-/* layout */
-.layout {
-  display: grid;
-  grid-template-columns: 300px 1fr;
-  gap: 80px;
-}
+            /* layout */
+            .layout {
+                display: grid;
+                grid-template-columns: 300px 1fr;
+                gap: 80px;
+            }
 
-@media (max-width: 860px) {
-  .shell { padding: 0 28px; }
-  .layout { grid-template-columns: 1fr; gap: 56px; }
-}
+            @media (max-width: 860px) {
+                .shell {
+                    padding: 0 28px;
+                }
+                .layout {
+                    grid-template-columns: 1fr;
+                    gap: 56px;
+                }
+            }
 
-/* labels */
-.label {
-  font-size: 0.625rem;
-  font-weight: 500;
-  letter-spacing: 0.2em;
-  text-transform: uppercase;
-  color: var(--t3);
-  margin-bottom: 32px;
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-}
+            /* labels */
+            .label {
+                font-size: 0.625rem;
+                font-weight: 500;
+                letter-spacing: 0.2em;
+                text-transform: uppercase;
+                color: var(--t3);
+                margin-bottom: 32px;
+                display: flex;
+                justify-content: space-between;
+                align-items: center;
+            }
 
-.label-num {
-  font-weight: 300;
-  color: var(--t4);
-  font-variant-numeric: tabular-nums;
-}
+            .label-num {
+                font-weight: 300;
+                color: var(--t4);
+                font-variant-numeric: tabular-nums;
+            }
 
-/* agents */
-.agents {}
+            /* agents */
+            .agents {
+            }
 
-.agent {
-  padding: 20px 0;
-  border-bottom: 1px solid var(--t5);
-  display: flex;
-  align-items: flex-start;
-  justify-content: space-between;
-  gap: 16px;
-}
+            .agent {
+                padding: 20px 0;
+                border-bottom: 1px solid var(--t5);
+                display: flex;
+                align-items: flex-start;
+                justify-content: space-between;
+                gap: 16px;
+            }
 
-.agent:first-child { padding-top: 0; }
-.agent:last-child { border-bottom: none; }
+            .agent:first-child {
+                padding-top: 0;
+            }
+            .agent:last-child {
+                border-bottom: none;
+            }
 
-.agent-info { min-width: 0; flex: 1; display: flex; align-items: center; gap: 10px; }
+            .agent-info {
+                min-width: 0;
+                flex: 1;
+                display: flex;
+                align-items: center;
+                gap: 10px;
+            }
 
-.agent-dot {
-  width: 4px;
-  height: 4px;
-  border-radius: 50%;
-  background: var(--t3);
-  flex-shrink: 0;
-}
+            .agent-dot {
+                width: 4px;
+                height: 4px;
+                border-radius: 50%;
+                background: var(--t3);
+                flex-shrink: 0;
+            }
 
-.agent-meta { min-width: 0; flex: 1; }
+            .agent-meta {
+                min-width: 0;
+                flex: 1;
+            }
 
-.agent-name {
-  font-size: 0.9375rem;
-  font-weight: 500;
-  color: var(--t1);
-  margin-bottom: 4px;
-}
+            .agent-name {
+                font-size: 0.9375rem;
+                font-weight: 500;
+                color: var(--t1);
+                margin-bottom: 4px;
+            }
 
-.agent-path {
-  font-size: 0.6875rem;
-  font-weight: 300;
-  color: var(--t4);
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
-}
+            .agent-path {
+                font-size: 0.6875rem;
+                font-weight: 300;
+                color: var(--t4);
+                white-space: nowrap;
+                overflow: hidden;
+                text-overflow: ellipsis;
+            }
 
-.agent-badge {
-  font-size: 0.75rem;
-  font-weight: 400;
-  color: var(--t4);
-  font-variant-numeric: tabular-nums;
-  flex-shrink: 0;
-  min-width: 20px;
-  text-align: right;
-}
+            .agent-badge {
+                font-size: 0.75rem;
+                font-weight: 400;
+                color: var(--t4);
+                font-variant-numeric: tabular-nums;
+                flex-shrink: 0;
+                min-width: 20px;
+                text-align: right;
+            }
 
-.agent-badge.active { color: var(--t1); }
+            .agent-badge.active {
+                color: var(--t1);
+            }
 
-/* feed */
-.feed {
-  display: flex;
-  flex-direction: column;
-  gap: 2px;
-  max-height: calc(100vh - 200px);
-  overflow-y: auto;
-}
+            /* feed */
+            .feed {
+                display: flex;
+                flex-direction: column;
+                gap: 2px;
+                max-height: calc(100vh - 200px);
+                overflow-y: auto;
+            }
 
-.msg {
-  padding: 24px 28px;
-  background: var(--t6);
-  border-radius: 6px;
-}
+            .msg {
+                padding: 24px 28px;
+                background: var(--t6);
+                border-radius: 6px;
+            }
 
-.msg-meta {
-  margin-bottom: 16px;
-  display: grid;
-  grid-template-columns: 32px 1fr auto;
-  gap: 2px 10px;
-  align-items: baseline;
-}
+            .msg-meta {
+                margin-bottom: 16px;
+                display: grid;
+                grid-template-columns: 32px 1fr auto;
+                gap: 2px 10px;
+                align-items: baseline;
+            }
 
-.msg-label {
-  font-size: 0.625rem;
-  font-weight: 400;
-  letter-spacing: 0.06em;
-  color: var(--t4);
-}
+            .msg-label {
+                font-size: 0.625rem;
+                font-weight: 400;
+                letter-spacing: 0.06em;
+                color: var(--t4);
+            }
 
-.msg-name {
-  font-size: 0.8125rem;
-  font-weight: 500;
-  color: var(--t1);
-}
+            .msg-name {
+                font-size: 0.8125rem;
+                font-weight: 500;
+                color: var(--t1);
+            }
 
-.msg-ts {
-  font-size: 0.625rem;
-  font-weight: 300;
-  color: var(--t4);
-  font-variant-numeric: tabular-nums;
-  grid-row: 1 / 3;
-  grid-column: 3;
-  align-self: start;
-  padding-top: 2px;
-}
+            .msg-ts {
+                font-size: 0.625rem;
+                font-weight: 300;
+                color: var(--t4);
+                font-variant-numeric: tabular-nums;
+                grid-row: 1 / 3;
+                grid-column: 3;
+                align-self: start;
+                padding-top: 2px;
+            }
 
-.msg-body {
-  font-size: 0.875rem;
-  font-weight: 300;
-  line-height: 1.7;
-  color: var(--t2);
-  word-break: break-word;
-}
+            .msg-body {
+                font-size: 0.875rem;
+                font-weight: 300;
+                line-height: 1.7;
+                color: var(--t2);
+                word-break: break-word;
+            }
 
-/* empty */
-.empty {
-  padding: 40px 0;
-  text-align: center;
-  font-size: 0.75rem;
-  font-weight: 300;
-  color: var(--t4);
-}
+            /* empty */
+            .empty {
+                padding: 40px 0;
+                text-align: center;
+                font-size: 0.75rem;
+                font-weight: 300;
+                color: var(--t4);
+            }
 
-/* animation */
-@keyframes enter {
-  from { opacity: 0; transform: translateY(-4px); }
-  to { opacity: 1; transform: translateY(0); }
-}
+            /* animation */
+            @keyframes enter {
+                from {
+                    opacity: 0;
+                    transform: translateY(-4px);
+                }
+                to {
+                    opacity: 1;
+                    transform: translateY(0);
+                }
+            }
 
-.anim { animation: enter 0.25s ease-out; }
-</style>
-</head>
-<body>
+            .anim {
+                animation: enter 0.25s ease-out;
+            }
+        </style>
+    </head>
+    <body>
+        <div class="shell">
+            <div class="head">
+                <div class="logo">talktome</div>
+                <div class="status">
+                    <span class="status-text" id="st">--</span>
+                    <div class="tick-bar">
+                        <div class="tick-fill" id="tf"></div>
+                    </div>
+                </div>
+            </div>
 
-<div class="shell">
-  <div class="head">
-    <div class="logo">talktome</div>
-    <div class="status">
-      <span class="status-text" id="st">--</span>
-      <div class="tick-bar"><div class="tick-fill" id="tf"></div></div>
-    </div>
-  </div>
+            <div class="layout">
+                <div>
+                    <div class="label">
+                        <span>agents</span>
+                        <span class="label-num" id="ac">0</span>
+                    </div>
+                    <div class="agents" id="ag"></div>
+                </div>
+                <div>
+                    <div class="label">
+                        <span>inbox</span>
+                        <span class="label-num" id="mc">0</span>
+                    </div>
+                    <div class="feed" id="fd"></div>
+                </div>
+            </div>
+        </div>
 
-  <div class="layout">
-    <div>
-      <div class="label">
-        <span>agents</span>
-        <span class="label-num" id="ac">0</span>
-      </div>
-      <div class="agents" id="ag"></div>
-    </div>
-    <div>
-      <div class="label">
-        <span>inbox</span>
-        <span class="label-num" id="mc">0</span>
-      </div>
-      <div class="feed" id="fd"></div>
-    </div>
-  </div>
-</div>
+        <script>
+            (function () {
+                var POLL = 3000,
+                    ps = Date.now(),
+                    aLen = 0,
+                    aJSON = "";
 
-<script>
-(function() {
-  var POLL = 3000, ps = Date.now(), aLen = 0, aJSON = '';
+                function txt(el, s) {
+                    el.textContent = s || "";
+                }
+                function mk(t, c) {
+                    var e = document.createElement(t);
+                    if (c) e.className = c;
+                    return e;
+                }
 
-  function txt(el, s) { el.textContent = s || ''; }
-  function mk(t, c) { var e = document.createElement(t); if (c) e.className = c; return e; }
+                function ago(ts) {
+                    var s = Math.floor(Date.now() / 1000 - ts);
+                    if (s < 5) return "now";
+                    if (s < 60) return s + "s";
+                    if (s < 3600) return Math.floor(s / 60) + "m";
+                    return Math.floor(s / 3600) + "h";
+                }
 
-  function ago(ts) {
-    var s = Math.floor(Date.now() / 1000 - ts);
-    if (s < 5) return 'now';
-    if (s < 60) return s + 's';
-    if (s < 3600) return Math.floor(s / 60) + 'm';
-    return Math.floor(s / 3600) + 'h';
-  }
+                function get(u) {
+                    return fetch(u)
+                        .then(function (r) {
+                            if (!r.ok) throw 0;
+                            return r.json();
+                        })
+                        .catch(function () {
+                            return null;
+                        });
+                }
 
-  function get(u) {
-    return fetch(u).then(function(r) {
-      if (!r.ok) throw 0; return r.json();
-    }).catch(function() { return null; });
-  }
+                function health() {
+                    return get("/health").then(function (d) {
+                        var st = document.getElementById("st");
+                        if (d && d.status === "ok") {
+                            st.className = "status-text on";
+                            txt(st, "live");
+                        } else {
+                            st.className = "status-text";
+                            txt(st, "offline");
+                        }
+                    });
+                }
 
-  function health() {
-    return get('/health').then(function(d) {
-      var st = document.getElementById('st');
-      if (d && d.status === 'ok') {
-        st.className = 'status-text on'; txt(st, 'live');
-      } else {
-        st.className = 'status-text'; txt(st, 'offline');
-      }
-    });
-  }
+                function agents() {
+                    return get("/agents").then(function (data) {
+                        var el = document.getElementById("ag"),
+                            ct = document.getElementById("ac");
+                        if (!data || !data.length) {
+                            if (aJSON !== "[]") {
+                                el.innerHTML = "";
+                                var em = mk("div", "empty");
+                                txt(em, "no agents");
+                                el.appendChild(em);
+                                txt(ct, "0");
+                                aJSON = "[]";
+                            }
+                            return;
+                        }
+                        var j = JSON.stringify(data);
+                        if (j === aJSON) return;
+                        aJSON = j;
+                        txt(ct, String(data.length));
+                        el.innerHTML = "";
+                        for (var i = 0; i < data.length; i++) {
+                            var a = data[i],
+                                card = mk("div", "agent");
+                            var info = mk("div", "agent-info");
+                            var dot = mk("div", "agent-dot");
+                            var meta = mk("div", "agent-meta");
+                            var nm = mk("div", "agent-name");
+                            txt(nm, a.name);
+                            var pt = mk("div", "agent-path");
+                            txt(pt, a.path);
+                            meta.appendChild(nm);
+                            meta.appendChild(pt);
+                            info.appendChild(dot);
+                            info.appendChild(meta);
+                            var bd = mk(
+                                "div",
+                                "agent-badge" +
+                                    (a.mailbox_count > 0 ? " active" : ""),
+                            );
+                            txt(
+                                bd,
+                                a.mailbox_count > 0
+                                    ? String(a.mailbox_count)
+                                    : "",
+                            );
+                            card.appendChild(info);
+                            card.appendChild(bd);
+                            el.appendChild(card);
+                        }
+                    });
+                }
 
-  function agents() {
-    return get('/agents').then(function(data) {
-      var el = document.getElementById('ag'), ct = document.getElementById('ac');
-      if (!data || !data.length) {
-        if (aJSON !== '[]') {
-          el.innerHTML = ''; var em = mk('div','empty'); txt(em,'no agents'); el.appendChild(em);
-          txt(ct,'0'); aJSON = '[]';
-        }
-        return;
-      }
-      var j = JSON.stringify(data);
-      if (j === aJSON) return;
-      aJSON = j;
-      txt(ct, String(data.length));
-      el.innerHTML = '';
-      for (var i = 0; i < data.length; i++) {
-        var a = data[i], card = mk('div','agent');
-        var info = mk('div','agent-info');
-        var dot = mk('div','agent-dot');
-        var meta = mk('div','agent-meta');
-        var nm = mk('div','agent-name'); txt(nm, a.name);
-        var pt = mk('div','agent-path'); txt(pt, a.path);
-        meta.appendChild(nm); meta.appendChild(pt);
-        info.appendChild(dot); info.appendChild(meta);
-        var bd = mk('div','agent-badge' + (a.mailbox_count > 0 ? ' active' : ''));
-        txt(bd, a.mailbox_count > 0 ? String(a.mailbox_count) : '');
-        card.appendChild(info); card.appendChild(bd);
-        el.appendChild(card);
-      }
-    });
-  }
+                function activity() {
+                    return get("/activity").then(function (data) {
+                        var el = document.getElementById("fd"),
+                            ct = document.getElementById("mc");
+                        if (!data || !data.length) {
+                            if (!aLen) {
+                                el.innerHTML = "";
+                                var em = mk("div", "empty");
+                                txt(em, "no messages");
+                                el.appendChild(em);
+                            }
+                            return;
+                        }
+                        if (data.length === aLen) return;
+                        var nw = data.slice(aLen),
+                            first = !aLen;
+                        aLen = data.length;
+                        if (first) el.innerHTML = "";
+                        var mc = 0;
+                        for (var k = 0; k < data.length; k++)
+                            if (data[k].event === "message") mc++;
+                        txt(ct, String(mc));
+                        for (var i = 0; i < nw.length; i++) {
+                            var it = nw[i];
+                            if (it.event !== "message") continue;
+                            var d = mk("div", "msg" + (first ? "" : " anim"));
+                            var mt = mk("div", "msg-meta");
+                            var fl = mk("span", "msg-label");
+                            txt(fl, "From");
+                            var fn = mk("span", "msg-name");
+                            txt(fn, it.sender);
+                            var tl = mk("span", "msg-label");
+                            txt(tl, "To");
+                            var tn = mk("span", "msg-name");
+                            txt(tn, it.peer);
+                            var ts = mk("span", "msg-ts");
+                            txt(ts, ago(it.timestamp));
+                            mt.appendChild(fl);
+                            mt.appendChild(fn);
+                            mt.appendChild(ts);
+                            mt.appendChild(tl);
+                            mt.appendChild(tn);
+                            var bd = mk("div", "msg-body");
+                            txt(bd, it.content || "");
+                            d.appendChild(mt);
+                            d.appendChild(bd);
+                            el.prepend(d);
+                        }
+                    });
+                }
 
-  function activity() {
-    return get('/activity').then(function(data) {
-      var el = document.getElementById('fd'), ct = document.getElementById('mc');
-      if (!data || !data.length) {
-        if (!aLen) { el.innerHTML = ''; var em = mk('div','empty'); txt(em,'no messages'); el.appendChild(em); }
-        return;
-      }
-      if (data.length === aLen) return;
-      var nw = data.slice(aLen), first = !aLen;
-      aLen = data.length;
-      if (first) el.innerHTML = '';
-      var mc = 0;
-      for (var k = 0; k < data.length; k++) if (data[k].event === 'message') mc++;
-      txt(ct, String(mc));
-      for (var i = 0; i < nw.length; i++) {
-        var it = nw[i];
-        if (it.event !== 'message') continue;
-        var d = mk('div', 'msg' + (first ? '' : ' anim'));
-        var mt = mk('div','msg-meta');
-        var fl = mk('span','msg-label'); txt(fl, 'From');
-        var fn = mk('span','msg-name'); txt(fn, it.sender);
-        var tl = mk('span','msg-label'); txt(tl, 'To');
-        var tn = mk('span','msg-name'); txt(tn, it.peer);
-        var ts = mk('span','msg-ts'); txt(ts, ago(it.timestamp));
-        mt.appendChild(fl); mt.appendChild(fn); mt.appendChild(ts);
-        mt.appendChild(tl); mt.appendChild(tn);
-        var bd = mk('div','msg-body'); txt(bd, it.content || '');
-        d.appendChild(mt); d.appendChild(bd);
-        el.prepend(d);
-      }
-    });
-  }
+                function bar() {
+                    var p = Math.min(((Date.now() - ps) / POLL) * 100, 100);
+                    document.getElementById("tf").style.width = p + "%";
+                    requestAnimationFrame(bar);
+                }
 
-  function bar() {
-    var p = Math.min(((Date.now() - ps) / POLL) * 100, 100);
-    document.getElementById('tf').style.width = p + '%';
-    requestAnimationFrame(bar);
-  }
-
-  function tick() { ps = Date.now(); Promise.all([health(), agents(), activity()]); }
-  bar(); tick(); setInterval(tick, POLL);
-})();
-</script>
-
-</body>
+                function tick() {
+                    ps = Date.now();
+                    Promise.all([health(), agents(), activity()]);
+                }
+                bar();
+                tick();
+                setInterval(tick, POLL);
+            })();
+        </script>
+    </body>
 </html>
