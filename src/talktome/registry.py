@@ -1,6 +1,6 @@
 from talktome import db
 
-# thin wrapper — delegates to sqlite-backed db module
+# thin wrapper, delegates to sqlite backed db module
 
 
 def register(name, path, metadata=None):

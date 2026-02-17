@@ -1,3 +1,4 @@
+import uuid
 from pathlib import Path
 
 from fastmcp import FastMCP
@@ -51,6 +52,33 @@ async def bridge_get_context(owner: str, key: str) -> str:
     if value is None:
         return f"no context '{key}' found for {owner}"
     return value
+
+
+@mcp.tool()
+async def bridge_create_task(agent: str, description: str) -> dict:
+    """create a task assigned to an agent"""
+    task_id = uuid.uuid4().hex[:8]
+    task = db.create_task(task_id, agent, description)
+    db.log_activity("task_created", agent=agent, task_id=task_id, description=description)
+    return task
+
+
+@mcp.tool()
+async def bridge_get_tasks(agent: str = "") -> list:
+    """get tasks, optionally filtered by agent"""
+    if agent:
+        return db.get_agent_tasks(agent)
+    return db.get_tasks()
+
+
+@mcp.tool()
+async def bridge_update_task(task_id: str, status: str, result: str = "") -> dict:
+    """update a task's status (pending/running/done/failed) and optional result"""
+    task = db.update_task(task_id, status=status, result=result or None)
+    if task is None:
+        return {"error": f"task '{task_id}' not found"}
+    db.log_activity("task_updated", task_id=task_id, status=status)
+    return task
 
 
 @mcp.custom_route("/health", methods=["GET"])
@@ -145,6 +173,49 @@ async def context_get_rest(request):
     if value is None:
         return JSONResponse({"error": f"no context '{key}' found for {owner}"})
     return JSONResponse({"value": value})
+
+
+@mcp.custom_route("/task", methods=["POST"])
+async def task_create_rest(request):
+    body = await request.json()
+    agent = body.get("agent", "")
+    description = body.get("description", "")
+    if not agent or not description:
+        return JSONResponse({"error": "agent and description required"}, status_code=400)
+    task_id = uuid.uuid4().hex[:8]
+    task = db.create_task(task_id, agent, description)
+    db.log_activity("task_created", agent=agent, task_id=task_id, description=description)
+    return JSONResponse(task)
+
+
+@mcp.custom_route("/tasks", methods=["GET"])
+async def tasks_list_rest(request):
+    return JSONResponse(db.get_tasks())
+
+
+@mcp.custom_route("/tasks/{agent}", methods=["GET"])
+async def tasks_agent_rest(request):
+    agent = request.path_params["agent"]
+    return JSONResponse(db.get_agent_tasks(agent))
+
+
+@mcp.custom_route("/task/{task_id}", methods=["PATCH"])
+async def task_update_rest(request):
+    task_id = request.path_params["task_id"]
+    body = await request.json()
+    status = body.get("status")
+    result = body.get("result")
+    task = db.update_task(task_id, status=status, result=result)
+    if task is None:
+        return JSONResponse({"error": f"task '{task_id}' not found"}, status_code=404)
+    db.log_activity("task_updated", task_id=task_id, status=status)
+    return JSONResponse(task)
+
+
+@mcp.custom_route("/tasks/{agent}/pending", methods=["GET"])
+async def tasks_pending_rest(request):
+    agent = request.path_params["agent"]
+    return JSONResponse(db.get_pending_tasks(agent))
 
 
 if __name__ == "__main__":

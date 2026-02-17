@@ -10,7 +10,7 @@ BRIDGE_URL = os.environ.get("TALKTOME_URL", "http://127.0.0.1:3456")
 def main():
     hook_input = json.loads(sys.stdin.read())
 
-    # prevent infinite loops // if we already blocked once then let claude stop
+    # prevent infinite loops, if we already blocked once then let claude stop
     if hook_input.get("stop_hook_active"):
         sys.exit(0)
 
@@ -31,13 +31,13 @@ def main():
         resp = urllib.request.urlopen(req, timeout=5)
         data = json.loads(resp.read())
     except (urllib.error.URLError, OSError):
-        # bridge not running, let claude stop
+        # bridge not running so let claude stop
         sys.exit(0)
 
     if data["count"] == 0:
         sys.exit(0)
 
-    # messages waiting which is to block claude from stopping
+    # messages waiting, block claude from stopping
     messages = data["messages"]
     preview = "; ".join(f"[{m['from']}]: {m['message'][:80]}" for m in messages[:5])
     result = {

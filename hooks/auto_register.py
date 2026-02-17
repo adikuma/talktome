@@ -6,7 +6,7 @@ import time
 import urllib.error
 import urllib.request
 
-# auto-starts bridge server and registers this codebase
+# auto starts bridge server and registers this codebase
 BRIDGE_URL = os.environ.get("TALKTOME_URL", "http://127.0.0.1:3456")
 TALKTOME_DIR = os.environ.get(
     "TALKTOME_DIR",
@@ -68,7 +68,7 @@ def main():
     with open(identity_file, "w") as f:
         f.write(name)
 
-    # register directly via REST
+    # register directly via rest
     payload = json.dumps({"name": name, "path": cwd}).encode()
     try:
         req = urllib.request.Request(

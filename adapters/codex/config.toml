@@ -1,0 +1,25 @@
+# talktome mcp server config for codex cli
+#
+# option 1: stdio (recommended, auto starts the bridge)
+# copy this block into ~/.codex/config.toml or .codex/config.toml
+#
+# [mcp_servers.talktome]
+# command = "uv"
+# args = ["run", "--directory", "/path/to/talktome", "python", "-m", "talktome.proxy"]
+# startup_timeout_sec = 15.0
+# tool_timeout_sec = 30.0
+#
+# option 2: http (if bridge is already running on port 3456)
+# copy this block into ~/.codex/config.toml or .codex/config.toml
+#
+# [mcp_servers.talktome]
+# url = "http://127.0.0.1:3456/mcp"
+# startup_timeout_sec = 10.0
+# tool_timeout_sec = 30.0
+
+# default: stdio mode
+[mcp_servers.talktome]
+command = "uv"
+args = ["run", "--directory", "/path/to/talktome", "python", "-m", "talktome.proxy"]
+startup_timeout_sec = 15.0
+tool_timeout_sec = 30.0

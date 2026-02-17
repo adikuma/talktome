@@ -44,6 +44,16 @@ def init():
             PRIMARY KEY (owner, key)
         );
 
+        CREATE TABLE IF NOT EXISTS tasks (
+            id TEXT PRIMARY KEY,
+            agent TEXT NOT NULL,
+            description TEXT NOT NULL,
+            status TEXT NOT NULL DEFAULT 'pending',
+            result TEXT,
+            created_at REAL NOT NULL,
+            updated_at REAL NOT NULL
+        );
+
         CREATE TABLE IF NOT EXISTS activity (
             id INTEGER PRIMARY KEY AUTOINCREMENT,
             event TEXT NOT NULL,
@@ -54,7 +64,7 @@ def init():
     conn.close()
 
 
-# --- registry operations ---
+# registry operations
 
 
 def register(name, path, metadata=None):
@@ -151,7 +161,7 @@ def agent_count():
     return row["c"]
 
 
-# --- queue operations ---
+# queue operations
 
 
 def send_message(sender, receiver, message):
@@ -173,7 +183,7 @@ def read_messages(agent):
         "SELECT sender, message, timestamp FROM messages WHERE receiver=? AND read=0 ORDER BY id",
         (agent,),
     ).fetchall()
-    # mark as read
+    # mark read
     conn.execute(
         "UPDATE messages SET read=1 WHERE receiver=? AND read=0",
         (agent,),
@@ -221,7 +231,131 @@ def message_count(agent):
     return row["c"]
 
 
-# --- context operations ---
+# task operations
+
+
+def create_task(task_id, agent, description):
+    now = time.time()
+    conn = _connect()
+    conn.execute(
+        "INSERT INTO tasks (id, agent, description, status, created_at, updated_at) VALUES (?, ?, ?, 'pending', ?, ?)",
+        (task_id, agent, description, now, now),
+    )
+    conn.commit()
+    conn.close()
+    return {
+        "id": task_id,
+        "agent": agent,
+        "description": description,
+        "status": "pending",
+        "result": None,
+        "created_at": now,
+        "updated_at": now,
+    }
+
+
+def get_task(task_id):
+    conn = _connect()
+    row = conn.execute("SELECT * FROM tasks WHERE id=?", (task_id,)).fetchone()
+    conn.close()
+    if row is None:
+        return None
+    return {
+        "id": row["id"],
+        "agent": row["agent"],
+        "description": row["description"],
+        "status": row["status"],
+        "result": row["result"],
+        "created_at": row["created_at"],
+        "updated_at": row["updated_at"],
+    }
+
+
+def get_tasks():
+    conn = _connect()
+    rows = conn.execute("SELECT * FROM tasks ORDER BY created_at DESC").fetchall()
+    conn.close()
+    return [
+        {
+            "id": r["id"],
+            "agent": r["agent"],
+            "description": r["description"],
+            "status": r["status"],
+            "result": r["result"],
+            "created_at": r["created_at"],
+            "updated_at": r["updated_at"],
+        }
+        for r in rows
+    ]
+
+
+def get_agent_tasks(agent):
+    conn = _connect()
+    rows = conn.execute(
+        "SELECT * FROM tasks WHERE agent=? ORDER BY created_at DESC", (agent,)
+    ).fetchall()
+    conn.close()
+    return [
+        {
+            "id": r["id"],
+            "agent": r["agent"],
+            "description": r["description"],
+            "status": r["status"],
+            "result": r["result"],
+            "created_at": r["created_at"],
+            "updated_at": r["updated_at"],
+        }
+        for r in rows
+    ]
+
+
+def get_pending_tasks(agent):
+    conn = _connect()
+    rows = conn.execute(
+        "SELECT * FROM tasks WHERE agent=? AND status='pending' ORDER BY created_at",
+        (agent,),
+    ).fetchall()
+    conn.close()
+    return [
+        {
+            "id": r["id"],
+            "agent": r["agent"],
+            "description": r["description"],
+            "status": r["status"],
+            "created_at": r["created_at"],
+            "updated_at": r["updated_at"],
+        }
+        for r in rows
+    ]
+
+
+def update_task(task_id, status=None, result=None):
+    conn = _connect()
+    row = conn.execute("SELECT * FROM tasks WHERE id=?", (task_id,)).fetchone()
+    if row is None:
+        conn.close()
+        return None
+    new_status = status or row["status"]
+    new_result = result if result is not None else row["result"]
+    now = time.time()
+    conn.execute(
+        "UPDATE tasks SET status=?, result=?, updated_at=? WHERE id=?",
+        (new_status, new_result, now, task_id),
+    )
+    conn.commit()
+    conn.close()
+    return {
+        "id": task_id,
+        "agent": row["agent"],
+        "description": row["description"],
+        "status": new_status,
+        "result": new_result,
+        "created_at": row["created_at"],
+        "updated_at": now,
+    }
+
+
+# context operations
 
 
 def set_context(owner, key, value):
@@ -247,7 +381,7 @@ def get_context(owner, key):
     return row["value"]
 
 
-# --- activity operations ---
+# activity operations
 
 
 def log_activity(event, **kwargs):
@@ -271,7 +405,7 @@ def get_activity():
         "SELECT event, timestamp, data FROM activity ORDER BY id DESC LIMIT 100"
     ).fetchall()
     conn.close()
-    # return newest-first, but reconstruct the flat dict format
+    # return newest first, reconstruct the flat dict format
     result = []
     for r in reversed(rows):
         entry = {"event": r["event"], "timestamp": r["timestamp"]}
@@ -280,7 +414,7 @@ def get_activity():
     return result
 
 
-# --- test helper ---
+# test helper
 
 
 def reset():
@@ -289,10 +423,11 @@ def reset():
         DELETE FROM agents;
         DELETE FROM messages;
         DELETE FROM context;
+        DELETE FROM tasks;
         DELETE FROM activity;
     """)
     conn.close()
 
 
-# auto-init on import
+# auto init on import
 init()

@@ -1,6 +1,6 @@
 from talktome import db
 
-# thin wrapper — delegates to sqlite-backed db module
+# thin wrapper, delegates to sqlite backed db module
 
 
 def send(sender_agent, receiver_agent, message):

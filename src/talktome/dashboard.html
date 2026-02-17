@@ -25,6 +25,10 @@
                 --t5: rgba(255, 255, 255, 0.06);
                 --t6: rgba(255, 255, 255, 0.03);
                 --font: "JetBrains Mono", monospace;
+                --green: #34d399;
+                --yellow: #fbbf24;
+                --red: #f87171;
+                --blue: #60a5fa;
             }
 
             html {
@@ -37,6 +41,7 @@
                 color: var(--t1);
                 min-height: 100vh;
                 -webkit-font-smoothing: antialiased;
+                padding-bottom: 80px;
             }
 
             ::-webkit-scrollbar {
@@ -82,7 +87,7 @@
             }
 
             .status-text.on {
-                color: #34d399;
+                color: var(--green);
             }
 
             .tick-bar {
@@ -101,8 +106,18 @@
             /* layout */
             .layout {
                 display: grid;
-                grid-template-columns: 300px 1fr;
-                gap: 80px;
+                grid-template-columns: 280px 1fr 320px;
+                gap: 60px;
+            }
+
+            @media (max-width: 1100px) {
+                .layout {
+                    grid-template-columns: 280px 1fr;
+                    gap: 40px;
+                }
+                .col-tasks {
+                    grid-column: 1 / -1;
+                }
             }
 
             @media (max-width: 860px) {
@@ -135,9 +150,6 @@
             }
 
             /* agents */
-            .agents {
-            }
-
             .agent {
                 padding: 20px 0;
                 border-bottom: 1px solid var(--t5);
@@ -260,6 +272,177 @@
                 word-break: break-word;
             }
 
+            /* tasks */
+            .task {
+                padding: 16px 0;
+                border-bottom: 1px solid var(--t5);
+            }
+
+            .task:first-child {
+                padding-top: 0;
+            }
+            .task:last-child {
+                border-bottom: none;
+            }
+
+            .task-header {
+                display: flex;
+                align-items: center;
+                gap: 10px;
+                margin-bottom: 8px;
+            }
+
+            .task-dot {
+                width: 6px;
+                height: 6px;
+                border-radius: 50%;
+                flex-shrink: 0;
+            }
+
+            .task-dot.pending {
+                background: var(--t3);
+            }
+            .task-dot.running {
+                background: var(--yellow);
+            }
+            .task-dot.done {
+                background: var(--green);
+            }
+            .task-dot.failed {
+                background: var(--red);
+            }
+
+            .task-agent {
+                font-size: 0.75rem;
+                font-weight: 500;
+                color: var(--t2);
+            }
+
+            .task-id {
+                font-size: 0.625rem;
+                font-weight: 300;
+                color: var(--t4);
+                margin-left: auto;
+                font-variant-numeric: tabular-nums;
+            }
+
+            .task-desc {
+                font-size: 0.8125rem;
+                font-weight: 300;
+                color: var(--t2);
+                line-height: 1.5;
+                padding-left: 16px;
+            }
+
+            .task-result {
+                font-size: 0.6875rem;
+                font-weight: 300;
+                color: var(--t4);
+                padding-left: 16px;
+                margin-top: 6px;
+            }
+
+            .task-time {
+                font-size: 0.5625rem;
+                font-weight: 300;
+                color: var(--t4);
+                padding-left: 16px;
+                margin-top: 4px;
+                font-variant-numeric: tabular-nums;
+            }
+
+            /* command bar */
+            .cmdbar {
+                position: fixed;
+                bottom: 0;
+                left: 0;
+                right: 0;
+                background: rgba(0, 0, 0, 0.95);
+                border-top: 1px solid var(--t5);
+                padding: 16px 56px;
+                backdrop-filter: blur(12px);
+                z-index: 100;
+            }
+
+            .cmdbar-inner {
+                max-width: 1280px;
+                margin: 0 auto;
+                display: flex;
+                gap: 12px;
+                align-items: center;
+            }
+
+            .cmdbar-prompt {
+                font-size: 0.75rem;
+                font-weight: 400;
+                color: var(--t3);
+                flex-shrink: 0;
+            }
+
+            .cmdbar-select {
+                background: transparent;
+                border: 1px solid var(--t5);
+                color: var(--t2);
+                font-family: var(--font);
+                font-size: 0.75rem;
+                font-weight: 300;
+                padding: 8px 12px;
+                border-radius: 4px;
+                outline: none;
+                min-width: 120px;
+                cursor: pointer;
+            }
+
+            .cmdbar-select:focus {
+                border-color: var(--t3);
+            }
+
+            .cmdbar-select option {
+                background: #111;
+                color: var(--t1);
+            }
+
+            .cmdbar-input {
+                flex: 1;
+                background: transparent;
+                border: 1px solid var(--t5);
+                color: var(--t1);
+                font-family: var(--font);
+                font-size: 0.8125rem;
+                font-weight: 300;
+                padding: 8px 16px;
+                border-radius: 4px;
+                outline: none;
+            }
+
+            .cmdbar-input::placeholder {
+                color: var(--t4);
+            }
+
+            .cmdbar-input:focus {
+                border-color: var(--t3);
+            }
+
+            .cmdbar-send {
+                background: transparent;
+                border: 1px solid var(--t5);
+                color: var(--t3);
+                font-family: var(--font);
+                font-size: 0.6875rem;
+                font-weight: 400;
+                letter-spacing: 0.1em;
+                text-transform: uppercase;
+                padding: 8px 20px;
+                border-radius: 4px;
+                cursor: pointer;
+                transition: all 0.15s ease;
+            }
+
+            .cmdbar-send:hover {
+                border-color: var(--t2);
+                color: var(--t1);
+            }
+
             /* empty */
             .empty {
                 padding: 40px 0;
@@ -308,11 +491,35 @@
                 </div>
                 <div>
                     <div class="label">
-                        <span>inbox</span>
+                        <span>activity</span>
                         <span class="label-num" id="mc">0</span>
                     </div>
                     <div class="feed" id="fd"></div>
                 </div>
+                <div class="col-tasks">
+                    <div class="label">
+                        <span>tasks</span>
+                        <span class="label-num" id="tc">0</span>
+                    </div>
+                    <div id="tl"></div>
+                </div>
+            </div>
+        </div>
+
+        <div class="cmdbar">
+            <div class="cmdbar-inner">
+                <span class="cmdbar-prompt">&gt;</span>
+                <select class="cmdbar-select" id="cmd-agent">
+                    <option value="">agent</option>
+                </select>
+                <input
+                    class="cmdbar-input"
+                    id="cmd-input"
+                    type="text"
+                    placeholder="assign a task..."
+                    autocomplete="off"
+                />
+                <button class="cmdbar-send" id="cmd-send">send</button>
             </div>
         </div>
 
@@ -321,7 +528,9 @@
                 var POLL = 3000,
                     ps = Date.now(),
                     aLen = 0,
-                    aJSON = "";
+                    aJSON = "",
+                    tJSON = "",
+                    agentNames = [];
 
                 function txt(el, s) {
                     el.textContent = s || "";
@@ -376,6 +585,8 @@
                                 el.appendChild(em);
                                 txt(ct, "0");
                                 aJSON = "[]";
+                                agentNames = [];
+                                updateAgentSelect();
                             }
                             return;
                         }
@@ -384,9 +595,11 @@
                         aJSON = j;
                         txt(ct, String(data.length));
                         el.innerHTML = "";
+                        agentNames = [];
                         for (var i = 0; i < data.length; i++) {
-                            var a = data[i],
-                                card = mk("div", "agent");
+                            var a = data[i];
+                            agentNames.push(a.name);
+                            var card = mk("div", "agent");
                             var info = mk("div", "agent-info");
                             var dot = mk("div", "agent-dot");
                             var meta = mk("div", "agent-meta");
@@ -413,7 +626,25 @@
                             card.appendChild(bd);
                             el.appendChild(card);
                         }
+                        updateAgentSelect();
                     });
+                }
+
+                function updateAgentSelect() {
+                    var sel = document.getElementById("cmd-agent");
+                    var cur = sel.value;
+                    sel.innerHTML = "";
+                    var def = mk("option");
+                    def.value = "";
+                    txt(def, "agent");
+                    sel.appendChild(def);
+                    for (var i = 0; i < agentNames.length; i++) {
+                        var opt = mk("option");
+                        opt.value = agentNames[i];
+                        txt(opt, agentNames[i]);
+                        sel.appendChild(opt);
+                    }
+                    if (cur && agentNames.indexOf(cur) >= 0) sel.value = cur;
                 }
 
                 function activity() {
@@ -424,7 +655,7 @@
                             if (!aLen) {
                                 el.innerHTML = "";
                                 var em = mk("div", "empty");
-                                txt(em, "no messages");
+                                txt(em, "no activity");
                                 el.appendChild(em);
                             }
                             return;
@@ -434,38 +665,161 @@
                             first = !aLen;
                         aLen = data.length;
                         if (first) el.innerHTML = "";
-                        var mc = 0;
-                        for (var k = 0; k < data.length; k++)
-                            if (data[k].event === "message") mc++;
-                        txt(ct, String(mc));
+                        txt(ct, String(data.length));
                         for (var i = 0; i < nw.length; i++) {
                             var it = nw[i];
-                            if (it.event !== "message") continue;
                             var d = mk("div", "msg" + (first ? "" : " anim"));
                             var mt = mk("div", "msg-meta");
-                            var fl = mk("span", "msg-label");
-                            txt(fl, "From");
-                            var fn = mk("span", "msg-name");
-                            txt(fn, it.sender);
-                            var tl = mk("span", "msg-label");
-                            txt(tl, "To");
-                            var tn = mk("span", "msg-name");
-                            txt(tn, it.peer);
-                            var ts = mk("span", "msg-ts");
-                            txt(ts, ago(it.timestamp));
-                            mt.appendChild(fl);
-                            mt.appendChild(fn);
-                            mt.appendChild(ts);
-                            mt.appendChild(tl);
-                            mt.appendChild(tn);
-                            var bd = mk("div", "msg-body");
-                            txt(bd, it.content || "");
-                            d.appendChild(mt);
-                            d.appendChild(bd);
+
+                            if (it.event === "message") {
+                                var fl = mk("span", "msg-label");
+                                txt(fl, "From");
+                                var fn = mk("span", "msg-name");
+                                txt(fn, it.sender);
+                                var tl = mk("span", "msg-label");
+                                txt(tl, "To");
+                                var tn = mk("span", "msg-name");
+                                txt(tn, it.peer);
+                                var ts = mk("span", "msg-ts");
+                                txt(ts, ago(it.timestamp));
+                                mt.appendChild(fl);
+                                mt.appendChild(fn);
+                                mt.appendChild(ts);
+                                mt.appendChild(tl);
+                                mt.appendChild(tn);
+                                var bd = mk("div", "msg-body");
+                                txt(bd, it.content || "");
+                                d.appendChild(mt);
+                                d.appendChild(bd);
+                            } else if (
+                                it.event === "task_created" ||
+                                it.event === "task_updated"
+                            ) {
+                                var el2 = mk("span", "msg-label");
+                                txt(el2, it.event === "task_created" ? "Task" : "Update");
+                                var en = mk("span", "msg-name");
+                                txt(en, it.agent || it.task_id || "");
+                                var ts2 = mk("span", "msg-ts");
+                                txt(ts2, ago(it.timestamp));
+                                mt.appendChild(el2);
+                                mt.appendChild(en);
+                                mt.appendChild(ts2);
+                                if (it.event === "task_created") {
+                                    var sl = mk("span", "msg-label");
+                                    txt(sl, "Desc");
+                                    var sn = mk("span", "msg-name");
+                                    txt(sn, it.description || "");
+                                    mt.appendChild(sl);
+                                    mt.appendChild(sn);
+                                } else {
+                                    var sl2 = mk("span", "msg-label");
+                                    txt(sl2, "Status");
+                                    var sn2 = mk("span", "msg-name");
+                                    txt(sn2, it.status || "");
+                                    mt.appendChild(sl2);
+                                    mt.appendChild(sn2);
+                                }
+                                d.appendChild(mt);
+                            } else if (it.event === "register") {
+                                var rl = mk("span", "msg-label");
+                                txt(rl, "Join");
+                                var rn = mk("span", "msg-name");
+                                txt(rn, it.agent || "");
+                                var rts = mk("span", "msg-ts");
+                                txt(rts, ago(it.timestamp));
+                                mt.appendChild(rl);
+                                mt.appendChild(rn);
+                                mt.appendChild(rts);
+                                var rl2 = mk("span", "msg-label");
+                                txt(rl2, "Path");
+                                var rp = mk("span", "msg-name");
+                                txt(rp, it.path || "");
+                                mt.appendChild(rl2);
+                                mt.appendChild(rp);
+                                d.appendChild(mt);
+                            } else {
+                                continue;
+                            }
                             el.prepend(d);
                         }
                     });
                 }
+
+                function tasks() {
+                    return get("/tasks").then(function (data) {
+                        var el = document.getElementById("tl"),
+                            ct = document.getElementById("tc");
+                        if (!data) return;
+                        var j = JSON.stringify(data);
+                        if (j === tJSON) return;
+                        tJSON = j;
+                        txt(ct, String(data.length));
+                        el.innerHTML = "";
+                        if (!data.length) {
+                            var em = mk("div", "empty");
+                            txt(em, "no tasks");
+                            el.appendChild(em);
+                            return;
+                        }
+                        for (var i = 0; i < data.length; i++) {
+                            var t = data[i];
+                            var card = mk("div", "task");
+                            var hdr = mk("div", "task-header");
+                            var dot = mk("div", "task-dot " + t.status);
+                            var agent = mk("span", "task-agent");
+                            txt(agent, t.agent);
+                            var tid = mk("span", "task-id");
+                            txt(tid, t.id);
+                            hdr.appendChild(dot);
+                            hdr.appendChild(agent);
+                            hdr.appendChild(tid);
+                            card.appendChild(hdr);
+                            var desc = mk("div", "task-desc");
+                            txt(desc, t.description);
+                            card.appendChild(desc);
+                            if (t.result) {
+                                var res = mk("div", "task-result");
+                                txt(res, t.result);
+                                card.appendChild(res);
+                            }
+                            var tm = mk("div", "task-time");
+                            txt(tm, ago(t.created_at));
+                            card.appendChild(tm);
+                            el.appendChild(card);
+                        }
+                    });
+                }
+
+                // command bar
+                function sendTask() {
+                    var sel = document.getElementById("cmd-agent");
+                    var inp = document.getElementById("cmd-input");
+                    var agent = sel.value;
+                    var desc = inp.value.trim();
+                    if (!agent || !desc) return;
+                    fetch("/task", {
+                        method: "POST",
+                        headers: { "Content-Type": "application/json" },
+                        body: JSON.stringify({
+                            agent: agent,
+                            description: desc,
+                        }),
+                    })
+                        .then(function () {
+                            inp.value = "";
+                            tick();
+                        })
+                        .catch(function () {});
+                }
+
+                document
+                    .getElementById("cmd-send")
+                    .addEventListener("click", sendTask);
+                document
+                    .getElementById("cmd-input")
+                    .addEventListener("keydown", function (e) {
+                        if (e.key === "Enter") sendTask();
+                    });
 
                 function bar() {
                     var p = Math.min(((Date.now() - ps) / POLL) * 100, 100);
@@ -475,7 +829,7 @@
 
                 function tick() {
                     ps = Date.now();
-                    Promise.all([health(), agents(), activity()]);
+                    Promise.all([health(), agents(), activity(), tasks()]);
                 }
                 bar();
                 tick();

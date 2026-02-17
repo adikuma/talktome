@@ -131,6 +131,37 @@ async def bridge_get_context(owner: str, key: str) -> str:
 
 
 @proxy.tool()
+async def bridge_create_task(agent: str, description: str) -> dict:
+    """create a task assigned to an agent"""
+    return call_bridge(
+        "/task",
+        method="POST",
+        data={"agent": agent, "description": description},
+    )
+
+
+@proxy.tool()
+async def bridge_get_tasks(agent: str = "") -> list:
+    """get tasks, optionally filtered by agent"""
+    if agent:
+        result = call_bridge(f"/tasks/{agent}")
+    else:
+        result = call_bridge("/tasks")
+    if isinstance(result, list):
+        return result
+    return []
+
+
+@proxy.tool()
+async def bridge_update_task(task_id: str, status: str, result: str = "") -> dict:
+    """update a task status (pending/running/done/failed) and optional result"""
+    data = {"status": status}
+    if result:
+        data["result"] = result
+    return call_bridge(f"/task/{task_id}", method="PATCH", data=data)
+
+
+@proxy.tool()
 async def bridge_wait_for_reply(name: str, timeout: int = 30) -> list[dict]:
     """wait for messages to arrive in this agent's mailbox, polling every 2s"""
     deadline = time.time() + timeout
