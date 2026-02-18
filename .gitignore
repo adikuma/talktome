@@ -12,6 +12,11 @@ wheels/
 # plans and notes
 plans/
 
+# local config
+.mcp.json
+.claude-plugin/
+.claude/
+
 # os artifacts
 nul
 Thumbs.db

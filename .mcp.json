@@ -1,8 +1,0 @@
-{
-  "mcpServers": {
-    "talktome": {
-      "command": "uv",
-      "args": ["run", "--directory", "${CLAUDE_PLUGIN_ROOT}", "python", "-m", "talktome.proxy"]
-    }
-  }
-}
