@@ -3,12 +3,13 @@ import os
 import sqlite3
 import time
 
-# db lives in user home so it survives across projects
+# store the database in the user home directory so it persists across projects
 DB_DIR = os.path.join(os.path.expanduser("~"), ".talktome")
 DB_PATH = os.path.join(DB_DIR, "bridge.db")
 
 
-def _connect():
+# open a connection to the sqlite database with wal mode for concurrency
+def connect():
     os.makedirs(DB_DIR, exist_ok=True)
     conn = sqlite3.connect(DB_PATH)
     conn.row_factory = sqlite3.Row
@@ -16,8 +17,9 @@ def _connect():
     return conn
 
 
+# create all tables if they do not already exist
 def init():
-    conn = _connect()
+    conn = connect()
     conn.executescript("""
         CREATE TABLE IF NOT EXISTS agents (
             name TEXT PRIMARY KEY,
@@ -64,9 +66,8 @@ def init():
     conn.close()
 
 
-# registry operations
-
-
+# registry operations, manage agent registration and status
+# register or update an agent with its name and project path
 def register(name, path, metadata=None):
     now = time.time()
     entry = {
@@ -77,7 +78,7 @@ def register(name, path, metadata=None):
         "last_seen": now,
         "metadata": metadata or {},
     }
-    conn = _connect()
+    conn = connect()
     conn.execute(
         """INSERT INTO agents (name, path, status, registered_at, last_seen, metadata)
            VALUES (?, ?, ?, ?, ?, ?)
@@ -91,8 +92,9 @@ def register(name, path, metadata=None):
     return entry
 
 
+# remove an agent from the registry by name
 def deregister(name):
-    conn = _connect()
+    conn = connect()
     cursor = conn.execute("DELETE FROM agents WHERE name=?", (name,))
     conn.commit()
     deleted = cursor.rowcount > 0
@@ -100,8 +102,9 @@ def deregister(name):
     return deleted
 
 
+# fetch a single agent record by name, returns none if not found
 def get_agent(name):
-    conn = _connect()
+    conn = connect()
     row = conn.execute("SELECT * FROM agents WHERE name=?", (name,)).fetchone()
     conn.close()
     if row is None:
@@ -116,15 +119,17 @@ def get_agent(name):
     }
 
 
+# return a sorted list of all registered agent names
 def list_agents():
-    conn = _connect()
+    conn = connect()
     rows = conn.execute("SELECT name FROM agents ORDER BY name").fetchall()
     conn.close()
     return [row["name"] for row in rows]
 
 
+# change an agents status and update its last seen timestamp
 def update_status(name, status):
-    conn = _connect()
+    conn = connect()
     cursor = conn.execute(
         "UPDATE agents SET status=?, last_seen=? WHERE name=?",
         (status, time.time(), name),
@@ -135,8 +140,9 @@ def update_status(name, status):
     return updated
 
 
+# replace the metadata json blob for an agent
 def update_metadata(name, metadata):
-    conn = _connect()
+    conn = connect()
     cursor = conn.execute(
         "UPDATE agents SET metadata=? WHERE name=?",
         (json.dumps(metadata), name),
@@ -147,27 +153,28 @@ def update_metadata(name, metadata):
     return updated
 
 
+# check if an agent with this name exists in the registry
 def is_registered(name):
-    conn = _connect()
+    conn = connect()
     row = conn.execute("SELECT 1 FROM agents WHERE name=?", (name,)).fetchone()
     conn.close()
     return row is not None
 
 
+# return the total number of registered agents
 def agent_count():
-    conn = _connect()
+    conn = connect()
     row = conn.execute("SELECT COUNT(*) as c FROM agents").fetchone()
     conn.close()
     return row["c"]
 
 
-# queue operations
-
-
+# queue operations, store and retrieve messages between agents
+# insert a new message into the mailbox for the receiver
 def send_message(sender, receiver, message):
     now = time.time()
     entry = {"from": sender, "message": message, "timestamp": now}
-    conn = _connect()
+    conn = connect()
     conn.execute(
         "INSERT INTO messages (sender, receiver, message, timestamp) VALUES (?, ?, ?, ?)",
         (sender, receiver, message, now),
@@ -177,13 +184,14 @@ def send_message(sender, receiver, message):
     return entry
 
 
+# read all unread messages for an agent and mark them as read
 def read_messages(agent):
-    conn = _connect()
+    conn = connect()
     rows = conn.execute(
         "SELECT sender, message, timestamp FROM messages WHERE receiver=? AND read=0 ORDER BY id",
         (agent,),
     ).fetchall()
-    # mark read
+    # mark all fetched messages as read so they are not returned again
     conn.execute(
         "UPDATE messages SET read=1 WHERE receiver=? AND read=0",
         (agent,),
@@ -191,26 +199,26 @@ def read_messages(agent):
     conn.commit()
     conn.close()
     return [
-        {"from": r["sender"], "message": r["message"], "timestamp": r["timestamp"]}
-        for r in rows
+        {"from": r["sender"], "message": r["message"], "timestamp": r["timestamp"]} for r in rows
     ]
 
 
+# peek at unread messages without marking them as read
 def peek_messages(agent):
-    conn = _connect()
+    conn = connect()
     rows = conn.execute(
         "SELECT sender, message, timestamp FROM messages WHERE receiver=? AND read=0 ORDER BY id",
         (agent,),
     ).fetchall()
     conn.close()
     return [
-        {"from": r["sender"], "message": r["message"], "timestamp": r["timestamp"]}
-        for r in rows
+        {"from": r["sender"], "message": r["message"], "timestamp": r["timestamp"]} for r in rows
     ]
 
 
+# mark all unread messages for an agent as read without returning them
 def clear_messages(agent):
-    conn = _connect()
+    conn = connect()
     cursor = conn.execute(
         "UPDATE messages SET read=1 WHERE receiver=? AND read=0",
         (agent,),
@@ -221,8 +229,9 @@ def clear_messages(agent):
     return cleared
 
 
+# count the number of unread messages waiting for an agent
 def message_count(agent):
-    conn = _connect()
+    conn = connect()
     row = conn.execute(
         "SELECT COUNT(*) as c FROM messages WHERE receiver=? AND read=0",
         (agent,),
@@ -231,12 +240,11 @@ def message_count(agent):
     return row["c"]
 
 
-# task operations
-
-
+# task operations, create and manage tasks assigned to agents
+# create a new task with pending status assigned to an agent
 def create_task(task_id, agent, description):
     now = time.time()
-    conn = _connect()
+    conn = connect()
     conn.execute(
         "INSERT INTO tasks (id, agent, description, status, created_at, updated_at) VALUES (?, ?, ?, 'pending', ?, ?)",
         (task_id, agent, description, now, now),
@@ -254,8 +262,9 @@ def create_task(task_id, agent, description):
     }
 
 
+# fetch a single task by its id, returns none if not found
 def get_task(task_id):
-    conn = _connect()
+    conn = connect()
     row = conn.execute("SELECT * FROM tasks WHERE id=?", (task_id,)).fetchone()
     conn.close()
     if row is None:
@@ -271,8 +280,9 @@ def get_task(task_id):
     }
 
 
+# return all tasks sorted by newest first
 def get_tasks():
-    conn = _connect()
+    conn = connect()
     rows = conn.execute("SELECT * FROM tasks ORDER BY created_at DESC").fetchall()
     conn.close()
     return [
@@ -289,8 +299,9 @@ def get_tasks():
     ]
 
 
+# return all tasks assigned to a specific agent, newest first
 def get_agent_tasks(agent):
-    conn = _connect()
+    conn = connect()
     rows = conn.execute(
         "SELECT * FROM tasks WHERE agent=? ORDER BY created_at DESC", (agent,)
     ).fetchall()
@@ -309,8 +320,9 @@ def get_agent_tasks(agent):
     ]
 
 
+# return only pending tasks for an agent, oldest first so they process in order
 def get_pending_tasks(agent):
-    conn = _connect()
+    conn = connect()
     rows = conn.execute(
         "SELECT * FROM tasks WHERE agent=? AND status='pending' ORDER BY created_at",
         (agent,),
@@ -329,8 +341,9 @@ def get_pending_tasks(agent):
     ]
 
 
+# update a tasks status and optional result, returns none if task not found
 def update_task(task_id, status=None, result=None):
-    conn = _connect()
+    conn = connect()
     row = conn.execute("SELECT * FROM tasks WHERE id=?", (task_id,)).fetchone()
     if row is None:
         conn.close()
@@ -355,11 +368,12 @@ def update_task(task_id, status=None, result=None):
     }
 
 
-# context operations
+# context operations, key value store scoped per agent
 
 
+# store or overwrite a context value for an agent
 def set_context(owner, key, value):
-    conn = _connect()
+    conn = connect()
     conn.execute(
         """INSERT INTO context (owner, key, value) VALUES (?, ?, ?)
            ON CONFLICT(owner, key) DO UPDATE SET value=excluded.value""",
@@ -369,8 +383,9 @@ def set_context(owner, key, value):
     conn.close()
 
 
+# retrieve a context value for an agent, returns none if not set
 def get_context(owner, key):
-    conn = _connect()
+    conn = connect()
     row = conn.execute(
         "SELECT value FROM context WHERE owner=? AND key=?",
         (owner, key),
@@ -381,16 +396,17 @@ def get_context(owner, key):
     return row["value"]
 
 
-# activity operations
+# activity operations, log and retrieve recent events for the dashboard
 
 
+# record an activity event with arbitrary keyword data
 def log_activity(event, **kwargs):
-    conn = _connect()
+    conn = connect()
     conn.execute(
         "INSERT INTO activity (event, timestamp, data) VALUES (?, ?, ?)",
         (event, time.time(), json.dumps(kwargs)),
     )
-    # prune to last 100
+    # keep only the last 100 entries to prevent unbounded growth
     conn.execute(
         """DELETE FROM activity WHERE id NOT IN
            (SELECT id FROM activity ORDER BY id DESC LIMIT 100)"""
@@ -399,13 +415,14 @@ def log_activity(event, **kwargs):
     conn.close()
 
 
+# return the last 100 activity events as a list of flat dicts
 def get_activity():
-    conn = _connect()
+    conn = connect()
     rows = conn.execute(
         "SELECT event, timestamp, data FROM activity ORDER BY id DESC LIMIT 100"
     ).fetchall()
     conn.close()
-    # return newest first, reconstruct the flat dict format
+    # merge the json data back into each event dict for a flat structure
     result = []
     for r in reversed(rows):
         entry = {"event": r["event"], "timestamp": r["timestamp"]}
@@ -414,11 +431,12 @@ def get_activity():
     return result
 
 
-# test helper
+# test helper, wipes all data from every table
 
 
+# clear all tables, used by tests to reset state between runs
 def reset():
-    conn = _connect()
+    conn = connect()
     conn.executescript("""
         DELETE FROM agents;
         DELETE FROM messages;
@@ -429,5 +447,5 @@ def reset():
     conn.close()
 
 
-# auto init on import
+# automatically create tables when the module is first imported
 init()

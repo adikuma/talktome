@@ -15,9 +15,7 @@ def clear_state():
 @pytest.mark.asyncio
 async def test_bridge_register():
     async with Client(mcp) as client:
-        result = await client.call_tool(
-            "bridge_register", {"name": "backend", "path": "/api"}
-        )
+        result = await client.call_tool("bridge_register", {"name": "backend", "path": "/api"})
         assert "backend" in str(result)
         assert registry.is_registered("backend")
 
@@ -113,9 +111,7 @@ async def test_bridge_get_context():
 @pytest.mark.asyncio
 async def test_bridge_get_context_not_found():
     async with Client(mcp) as client:
-        result = await client.call_tool(
-            "bridge_get_context", {"owner": "backend", "key": "nope"}
-        )
+        result = await client.call_tool("bridge_get_context", {"owner": "backend", "key": "nope"})
         assert "no context" in str(result)
 
 
@@ -206,9 +202,7 @@ async def test_send_rest_unknown_peer(http_client):
 
 @pytest.mark.asyncio
 async def test_send_rest_missing_peer(http_client):
-    resp = await http_client.post(
-        "/send", json={"sender": "alice", "peer": "", "message": "hey"}
-    )
+    resp = await http_client.post("/send", json={"sender": "alice", "peer": "", "message": "hey"})
     assert resp.status_code == 400
 
 

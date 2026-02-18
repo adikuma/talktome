@@ -15,12 +15,19 @@ def main():
         sys.exit(0)
 
     # read identity file to know who we are
+    # file is json with name and session_id, or plain text for old format
     identity_file = os.path.join(hook_input["cwd"], ".claude", ".bridge-identity")
     if not os.path.exists(identity_file):
         sys.exit(0)
 
     with open(identity_file) as f:
-        name = f.read().strip()
+        raw = f.read().strip()
+
+    try:
+        identity = json.loads(raw)
+        name = identity.get("name", "")
+    except (ValueError, json.JSONDecodeError):
+        name = raw
 
     if not name:
         sys.exit(0)

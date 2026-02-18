@@ -1,3 +1,5 @@
+import json
+import os
 import uuid
 from pathlib import Path
 
@@ -5,6 +7,9 @@ from fastmcp import FastMCP
 from starlette.responses import HTMLResponse, JSONResponse
 
 from talktome import db, queue, registry
+
+# path where claude code stores project session files on disk
+CLAUDE_PROJECTS_DIR = os.path.join(os.path.expanduser("~"), ".claude", "projects")
 
 mcp = FastMCP("talktome")
 
@@ -98,10 +103,15 @@ async def register_rest(request):
     body = await request.json()
     name = body.get("name", "")
     path = body.get("path", "")
+    session_id = body.get("session_id", "")
     if not name:
         return JSONResponse({"error": "name required"}, status_code=400)
     db.log_activity("register", agent=name, path=path)
     entry = registry.register(name, path)
+    # store session_id in metadata so we can link agent to its session
+    if session_id:
+        registry.update_metadata(name, {"session_id": session_id})
+        entry["metadata"] = {"session_id": session_id}
     return JSONResponse(entry)
 
 
@@ -111,11 +121,13 @@ async def agents(request):
     result = []
     for name in names:
         entry = registry.get(name)
+        meta = entry["metadata"] if entry else {}
         result.append(
             {
                 "name": name,
                 "path": entry["path"] if entry else "",
                 "status": entry["status"] if entry else "unknown",
+                "session_id": meta.get("session_id", ""),
                 "mailbox_count": queue.count(name),
             }
         )
@@ -216,6 +228,140 @@ async def task_update_rest(request):
 async def tasks_pending_rest(request):
     agent = request.path_params["agent"]
     return JSONResponse(db.get_pending_tasks(agent))
+
+
+# session discovery helpers, used by the sessions endpoint to
+# find claude code projects and sessions from disk
+
+
+def decode_claude_path(dirname):
+    # convert an encoded directory name back to a display path
+    # for example c double dash users dash adity becomes c colon slash users slash adity
+    # the encoding is lossy because spaces and separators both become dashes
+    # so this is best effort for display, we prefer cwd from jsonl when available
+    if len(dirname) > 2 and dirname[1:3] == "--":
+        result = dirname[0] + ":/" + dirname[3:]
+    else:
+        result = dirname
+    result = result.replace("-", "/")
+    return result
+
+
+def read_session_meta(fpath):
+    # read the first meaningful line from a session jsonl file
+    # skips empty lines and file history snapshot records
+    # returns the first real record as a dict with session metadata
+    # reads line by line so it handles large files without loading entirely
+    try:
+        with open(fpath, "r", encoding="utf-8") as f:
+            for line in f:
+                line = line.strip()
+                if not line:
+                    continue
+                try:
+                    record = json.loads(line)
+                except (ValueError, json.JSONDecodeError):
+                    continue
+                # skip snapshot records, we want the actual session metadata
+                if record.get("type") == "file-history-snapshot":
+                    continue
+                return record
+    except (OSError, UnicodeDecodeError):
+        pass
+    return {}
+
+
+@mcp.custom_route("/sessions", methods=["GET"])
+async def sessions_rest(request):
+    # scans the claude projects directory on disk to discover all sessions
+    # returns them grouped by project with metadata from the jsonl files
+    if not os.path.isdir(CLAUDE_PROJECTS_DIR):
+        return JSONResponse({"projects": []})
+
+    # build a lookup table mapping normalized paths to agent names
+    # so we can mark which projects have a registered talktome agent
+    registered = {}
+    # also build a session id to agent name lookup for per session marking
+    session_agents = {}
+    for name in registry.list_all():
+        entry = registry.get(name)
+        if entry:
+            normalized = entry["path"].replace("\\", "/").rstrip("/").lower()
+            registered[normalized] = name
+            sid = entry["metadata"].get("session_id", "")
+            if sid:
+                session_agents[sid] = name
+
+    projects = []
+    for dirname in sorted(os.listdir(CLAUDE_PROJECTS_DIR)):
+        dirpath = os.path.join(CLAUDE_PROJECTS_DIR, dirname)
+        if not os.path.isdir(dirpath):
+            continue
+
+        # decode the directory name as a fallback display path
+        decoded = decode_claude_path(dirname)
+
+        # each jsonl file inside the project dir is one session
+        sessions = []
+        for fname in os.listdir(dirpath):
+            if not fname.endswith(".jsonl"):
+                continue
+            fpath = os.path.join(dirpath, fname)
+            session_id = fname[:-6]
+
+            # get file stats for last active time and size
+            try:
+                stat = os.stat(fpath)
+                last_active = stat.st_mtime
+                file_size = stat.st_size
+            except OSError:
+                continue
+
+            # read the first record from the jsonl for session metadata
+            meta = read_session_meta(fpath)
+
+            sessions.append(
+                {
+                    "id": session_id,
+                    "slug": meta.get("slug", ""),
+                    "branch": meta.get("gitBranch", ""),
+                    "cwd": meta.get("cwd", decoded),
+                    "startedAt": meta.get("timestamp", ""),
+                    "lastActive": last_active,
+                    "size": file_size,
+                    "agent": session_agents.get(session_id, ""),
+                }
+            )
+
+        # sort sessions so the most recently active ones come first
+        sessions.sort(key=lambda s: s["lastActive"], reverse=True)
+
+        # prefer the cwd from the newest session as the canonical project path
+        # since decoded directory names are lossy and may not match the real path
+        canonical = sessions[0]["cwd"] if sessions else decoded
+        project_name = canonical.replace("\\", "/").rstrip("/").rsplit("/", 1)[-1]
+
+        # check if this project path matches any registered talktome agent
+        normalized = canonical.replace("\\", "/").rstrip("/").lower()
+        agent_name = registered.get(normalized)
+
+        projects.append(
+            {
+                "path": canonical,
+                "name": project_name,
+                "agent": agent_name,
+                "sessionCount": len(sessions),
+                "sessions": sessions,
+            }
+        )
+
+    # sort projects by most recently active session first
+    projects.sort(
+        key=lambda p: p["sessions"][0]["lastActive"] if p["sessions"] else 0,
+        reverse=True,
+    )
+
+    return JSONResponse({"projects": projects})
 
 
 if __name__ == "__main__":

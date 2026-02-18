@@ -14,6 +14,7 @@ def clear_state():
 
 # db layer tests
 
+
 def test_create_task():
     task = db.create_task("t1", "backend", "run tests")
     assert task["id"] == "t1"
@@ -86,6 +87,7 @@ def test_update_task_not_found():
 
 # rest endpoint tests
 
+
 @pytest_asyncio.fixture
 async def http_client():
     app = mcp.http_app(path="/mcp")
@@ -96,9 +98,7 @@ async def http_client():
 
 @pytest.mark.asyncio
 async def test_task_create_rest(http_client):
-    resp = await http_client.post(
-        "/task", json={"agent": "backend", "description": "run tests"}
-    )
+    resp = await http_client.post("/task", json={"agent": "backend", "description": "run tests"})
     assert resp.status_code == 200
     data = resp.json()
     assert data["agent"] == "backend"
@@ -136,9 +136,7 @@ async def test_tasks_agent_rest(http_client):
 @pytest.mark.asyncio
 async def test_task_update_rest(http_client):
     db.create_task("t1", "backend", "run tests")
-    resp = await http_client.patch(
-        "/task/t1", json={"status": "running"}
-    )
+    resp = await http_client.patch("/task/t1", json={"status": "running"})
     assert resp.status_code == 200
     data = resp.json()
     assert data["status"] == "running"
@@ -147,9 +145,7 @@ async def test_task_update_rest(http_client):
 @pytest.mark.asyncio
 async def test_task_update_rest_with_result(http_client):
     db.create_task("t1", "backend", "run tests")
-    resp = await http_client.patch(
-        "/task/t1", json={"status": "done", "result": "all passed"}
-    )
+    resp = await http_client.patch("/task/t1", json={"status": "done", "result": "all passed"})
     data = resp.json()
     assert data["status"] == "done"
     assert data["result"] == "all passed"
@@ -157,9 +153,7 @@ async def test_task_update_rest_with_result(http_client):
 
 @pytest.mark.asyncio
 async def test_task_update_rest_not_found(http_client):
-    resp = await http_client.patch(
-        "/task/nope", json={"status": "done"}
-    )
+    resp = await http_client.patch("/task/nope", json={"status": "done"})
     assert resp.status_code == 404
 
 
@@ -175,6 +169,7 @@ async def test_tasks_pending_rest(http_client):
 
 
 # mcp tool tests
+
 
 @pytest.mark.asyncio
 async def test_bridge_create_task():
@@ -228,11 +223,10 @@ async def test_bridge_update_task_not_found():
 
 # activity logging for tasks
 
+
 @pytest.mark.asyncio
 async def test_task_activity_logged(http_client):
-    await http_client.post(
-        "/task", json={"agent": "backend", "description": "run tests"}
-    )
+    await http_client.post("/task", json={"agent": "backend", "description": "run tests"})
     resp = await http_client.get("/activity")
     data = resp.json()
     events = [e["event"] for e in data]

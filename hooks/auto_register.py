@@ -27,15 +27,14 @@ def start_bridge():
     # start the bridge server in the background
     if sys.platform == "win32":
         subprocess.Popen(
-            ["uv", "run", "--directory", TALKTOME_DIR, "python", "-m", "talktome"],
-            creationflags=subprocess.CREATE_NEW_PROCESS_GROUP
-            | subprocess.DETACHED_PROCESS,
+            ["uv", "run", "--no-sync", "--directory", TALKTOME_DIR, "python", "-m", "talktome"],
+            creationflags=subprocess.CREATE_NEW_PROCESS_GROUP | subprocess.DETACHED_PROCESS,
             stdout=subprocess.DEVNULL,
             stderr=subprocess.DEVNULL,
         )
     else:
         subprocess.Popen(
-            ["uv", "run", "--directory", TALKTOME_DIR, "python", "-m", "talktome"],
+            ["uv", "run", "--no-sync", "--directory", TALKTOME_DIR, "python", "-m", "talktome"],
             start_new_session=True,
             stdout=subprocess.DEVNULL,
             stderr=subprocess.DEVNULL,
@@ -49,12 +48,56 @@ def start_bridge():
     return False
 
 
+# parent folder names that are too generic to use as a prefix
+GENERIC_PARENTS = {
+    "desktop",
+    "projects",
+    "repos",
+    "code",
+    "src",
+    "home",
+    "users",
+    "documents",
+    "downloads",
+    "coding",
+    "work",
+    "dev",
+    "github",
+    "gitlab",
+    "bitbucket",
+    "coding-projects",
+    "my-projects",
+    "personal-projects",
+}
+
+
+# derive an agent name from the project path
+# uses parent folder as prefix to avoid collisions between projects
+# with the same folder name, skips generic parent names
+def derive_agent_name(cwd):
+    normalized = cwd.replace("\\", "/").rstrip("/")
+    parts = normalized.split("/")
+    folder = parts[-1] if parts else "unknown"
+    parent = parts[-2] if len(parts) >= 2 else ""
+
+    # clean up the folder and parent names
+    folder = folder.lower().replace(" ", "-")
+    parent = parent.lower().replace(" ", "-")
+
+    # skip generic parent names, just use the folder
+    if not parent or parent in GENERIC_PARENTS:
+        return folder
+
+    return f"{parent}-{folder}"
+
+
 def main():
     hook_input = json.loads(sys.stdin.read())
     cwd = hook_input["cwd"]
+    session_id = hook_input.get("session_id", "")
 
-    # use the folder name as the agent name
-    name = os.path.basename(cwd).lower().replace(" ", "-")
+    # derive agent name from the project path with parent prefix
+    name = derive_agent_name(cwd)
 
     # ensure bridge is running
     if not is_bridge_running():
@@ -66,10 +109,10 @@ def main():
     os.makedirs(claude_dir, exist_ok=True)
     identity_file = os.path.join(claude_dir, ".bridge-identity")
     with open(identity_file, "w") as f:
-        f.write(name)
+        json.dump({"name": name, "session_id": session_id}, f)
 
     # register directly via rest
-    payload = json.dumps({"name": name, "path": cwd}).encode()
+    payload = json.dumps({"name": name, "path": cwd, "session_id": session_id}).encode()
     try:
         req = urllib.request.Request(
             f"{BRIDGE_URL}/register",

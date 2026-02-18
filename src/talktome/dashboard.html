@@ -5,7 +5,7 @@
         <meta name="viewport" content="width=device-width, initial-scale=1.0" />
         <title>talktome</title>
         <style>
-            @import url("https://fonts.googleapis.com/css2?family=JetBrains+Mono:ital,wght@0,200;0,300;0,400;0,500;0,600;0,700;1,300;1,400&display=swap");
+            @import url("https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@300;400;500;700&display=swap");
 
             *,
             *::before,
@@ -16,23 +16,25 @@
             }
 
             :root {
-                --bg: #000;
+                --bg: #0a0a0a;
+                --card: #141414;
+                --card-hover: #1a1a1a;
                 --white: #fff;
-                --t1: rgba(255, 255, 255, 0.92);
-                --t2: rgba(255, 255, 255, 0.55);
-                --t3: rgba(255, 255, 255, 0.28);
-                --t4: rgba(255, 255, 255, 0.12);
-                --t5: rgba(255, 255, 255, 0.06);
-                --t6: rgba(255, 255, 255, 0.03);
+                --t1: rgba(255, 255, 255, 0.9);
+                --t2: rgba(255, 255, 255, 0.5);
+                --t3: rgba(255, 255, 255, 0.25);
+                --t4: rgba(255, 255, 255, 0.1);
+                --border: rgba(255, 255, 255, 0.15);
+                --green: #00ff88;
+                --yellow: #ffcc00;
+                --red: #ff3333;
+                --blue: #5599ff;
                 --font: "JetBrains Mono", monospace;
-                --green: #34d399;
-                --yellow: #fbbf24;
-                --red: #f87171;
-                --blue: #60a5fa;
+                --sidebar-w: 240px;
             }
 
             html {
-                font-size: 15px;
+                font-size: 14px;
             }
 
             body {
@@ -41,500 +43,795 @@
                 color: var(--t1);
                 min-height: 100vh;
                 -webkit-font-smoothing: antialiased;
-                padding-bottom: 80px;
             }
 
             ::-webkit-scrollbar {
-                width: 0;
+                width: 4px;
+            }
+            ::-webkit-scrollbar-track {
+                background: transparent;
+            }
+            ::-webkit-scrollbar-thumb {
+                background: var(--t4);
+                border-radius: 2px;
             }
 
             .shell {
-                max-width: 1280px;
-                margin: 0 auto;
-                padding: 0 56px;
+                display: flex;
+                height: 100vh;
             }
 
-            /* header */
-            .head {
-                padding: 52px 0 0;
-                margin-bottom: 64px;
+            /* ── sidebar ── */
+            .sidebar {
+                width: var(--sidebar-w);
+                min-width: var(--sidebar-w);
+                border-right: 1px solid var(--border);
                 display: flex;
-                align-items: flex-end;
+                flex-direction: column;
+                overflow: hidden;
+                background: var(--bg);
+            }
+
+            .sidebar-header {
+                padding: 16px;
+                display: flex;
+                align-items: center;
                 justify-content: space-between;
+                border-bottom: 1px solid var(--border);
+                flex-shrink: 0;
+                cursor: pointer;
+            }
+
+            .sidebar-header:hover {
+                background: rgba(255, 255, 255, 0.03);
             }
 
             .logo {
-                font-size: 1.2rem;
-                font-weight: 300;
-                color: var(--t1);
-                letter-spacing: 0.08em;
-                text-transform: lowercase;
-            }
-
-            .status {
-                display: flex;
-                align-items: center;
-                gap: 12px;
-            }
-
-            .status-text {
-                font-size: 0.6875rem;
-                font-weight: 400;
-                letter-spacing: 0.14em;
+                font-size: 0.85rem;
+                font-weight: 700;
+                color: var(--white);
                 text-transform: uppercase;
-                color: var(--t3);
-                transition: color 0.6s ease;
+                letter-spacing: 0.15em;
             }
 
-            .status-text.on {
-                color: var(--green);
+            .health-dot {
+                width: 6px;
+                height: 6px;
+                border-radius: 50%;
+                background: var(--t4);
+                transition: background 0.3s;
             }
 
-            .tick-bar {
-                width: 40px;
-                height: 1px;
-                background: var(--t5);
-                overflow: hidden;
+            .health-dot.on {
+                background: var(--green);
+                box-shadow: 0 0 6px var(--green);
             }
 
-            .tick-fill {
-                height: 100%;
-                width: 0%;
-                background: var(--t3);
+            .sidebar-scroll {
+                flex: 1;
+                overflow-y: auto;
+                padding: 0;
             }
 
-            /* layout */
-            .layout {
-                display: grid;
-                grid-template-columns: 280px 1fr 320px;
-                gap: 60px;
-            }
-
-            @media (max-width: 1100px) {
-                .layout {
-                    grid-template-columns: 280px 1fr;
-                    gap: 40px;
-                }
-                .col-tasks {
-                    grid-column: 1 / -1;
-                }
-            }
-
-            @media (max-width: 860px) {
-                .shell {
-                    padding: 0 28px;
-                }
-                .layout {
-                    grid-template-columns: 1fr;
-                    gap: 56px;
-                }
-            }
-
-            /* labels */
-            .label {
-                font-size: 0.625rem;
-                font-weight: 500;
+            .sb-label {
+                font-size: 0.55rem;
+                font-weight: 700;
                 letter-spacing: 0.2em;
                 text-transform: uppercase;
                 color: var(--t3);
-                margin-bottom: 32px;
+                padding: 16px 16px 8px;
                 display: flex;
                 justify-content: space-between;
                 align-items: center;
             }
 
-            .label-num {
-                font-weight: 300;
-                color: var(--t4);
-                font-variant-numeric: tabular-nums;
+            .sb-count {
+                color: var(--t3);
             }
 
-            /* agents */
-            .agent {
-                padding: 20px 0;
-                border-bottom: 1px solid var(--t5);
-                display: flex;
-                align-items: flex-start;
-                justify-content: space-between;
-                gap: 16px;
-            }
-
-            .agent:first-child {
-                padding-top: 0;
-            }
-            .agent:last-child {
-                border-bottom: none;
-            }
-
-            .agent-info {
-                min-width: 0;
-                flex: 1;
+            /* agent cards */
+            .agent-card {
+                padding: 10px 16px;
+                cursor: pointer;
+                border-bottom: 1px solid var(--t4);
                 display: flex;
                 align-items: center;
                 gap: 10px;
+                transition: background 0.15s;
+            }
+
+            .agent-card:hover {
+                background: rgba(255, 255, 255, 0.04);
+            }
+
+            .agent-card.active {
+                background: rgba(255, 255, 255, 0.06);
+                border-left: 2px solid var(--white);
+                padding-left: 14px;
             }
 
             .agent-dot {
-                width: 4px;
-                height: 4px;
-                border-radius: 50%;
-                background: var(--t3);
-                flex-shrink: 0;
-            }
-
-            .agent-meta {
-                min-width: 0;
-                flex: 1;
-            }
-
-            .agent-name {
-                font-size: 0.9375rem;
-                font-weight: 500;
-                color: var(--t1);
-                margin-bottom: 4px;
-            }
-
-            .agent-path {
-                font-size: 0.6875rem;
-                font-weight: 300;
-                color: var(--t4);
-                white-space: nowrap;
-                overflow: hidden;
-                text-overflow: ellipsis;
-            }
-
-            .agent-badge {
-                font-size: 0.75rem;
-                font-weight: 400;
-                color: var(--t4);
-                font-variant-numeric: tabular-nums;
-                flex-shrink: 0;
-                min-width: 20px;
-                text-align: right;
-            }
-
-            .agent-badge.active {
-                color: var(--t1);
-            }
-
-            /* feed */
-            .feed {
-                display: flex;
-                flex-direction: column;
-                gap: 2px;
-                max-height: calc(100vh - 200px);
-                overflow-y: auto;
-            }
-
-            .msg {
-                padding: 24px 28px;
-                background: var(--t6);
-                border-radius: 6px;
-            }
-
-            .msg-meta {
-                margin-bottom: 16px;
-                display: grid;
-                grid-template-columns: 32px 1fr auto;
-                gap: 2px 10px;
-                align-items: baseline;
-            }
-
-            .msg-label {
-                font-size: 0.625rem;
-                font-weight: 400;
-                letter-spacing: 0.06em;
-                color: var(--t4);
-            }
-
-            .msg-name {
-                font-size: 0.8125rem;
-                font-weight: 500;
-                color: var(--t1);
-            }
-
-            .msg-ts {
-                font-size: 0.625rem;
-                font-weight: 300;
-                color: var(--t4);
-                font-variant-numeric: tabular-nums;
-                grid-row: 1 / 3;
-                grid-column: 3;
-                align-self: start;
-                padding-top: 2px;
-            }
-
-            .msg-body {
-                font-size: 0.875rem;
-                font-weight: 300;
-                line-height: 1.7;
-                color: var(--t2);
-                word-break: break-word;
-            }
-
-            /* tasks */
-            .task {
-                padding: 16px 0;
-                border-bottom: 1px solid var(--t5);
-            }
-
-            .task:first-child {
-                padding-top: 0;
-            }
-            .task:last-child {
-                border-bottom: none;
-            }
-
-            .task-header {
-                display: flex;
-                align-items: center;
-                gap: 10px;
-                margin-bottom: 8px;
-            }
-
-            .task-dot {
                 width: 6px;
                 height: 6px;
                 border-radius: 50%;
                 flex-shrink: 0;
             }
 
-            .task-dot.pending {
-                background: var(--t3);
+            .agent-dot.on {
+                background: var(--green);
+                box-shadow: 0 0 4px var(--green);
             }
-            .task-dot.running {
-                background: var(--yellow);
+
+            .agent-dot.off {
+                background: var(--t4);
             }
-            .task-dot.done {
+
+            .agent-info {
+                flex: 1;
+                min-width: 0;
+            }
+
+            .agent-name {
+                font-size: 0.8rem;
+                font-weight: 500;
+                color: var(--t1);
+                overflow: hidden;
+                text-overflow: ellipsis;
+                white-space: nowrap;
+            }
+
+            .agent-path {
+                font-size: 0.6rem;
+                font-weight: 300;
+                color: var(--t3);
+                margin-top: 1px;
+                overflow: hidden;
+                text-overflow: ellipsis;
+                white-space: nowrap;
+            }
+
+            .agent-badge {
+                font-size: 0.55rem;
+                font-weight: 700;
+                background: var(--blue);
+                color: var(--bg);
+                width: 18px;
+                height: 18px;
+                border-radius: 50%;
+                display: flex;
+                align-items: center;
+                justify-content: center;
+                flex-shrink: 0;
+            }
+
+            /* activity accordion */
+            .activity-section {
+                border-top: 1px solid var(--t4);
+                margin-top: 4px;
+            }
+
+            .activity-header {
+                padding: 12px 16px;
+                display: flex;
+                align-items: center;
+                gap: 8px;
+                cursor: pointer;
+                user-select: none;
+                font-size: 0.7rem;
+                font-weight: 700;
+                letter-spacing: 0.2em;
+                text-transform: uppercase;
+                color: var(--t3);
+                transition: background 0.15s;
+            }
+
+            .activity-header:hover {
+                background: rgba(255, 255, 255, 0.04);
+            }
+
+            .activity-arrow {
+                margin-left: auto;
+                font-size: 1rem;
+                color: var(--t3);
+                transition: transform 0.2s ease;
+                display: inline-block;
+            }
+
+            .activity-header.open .activity-arrow {
+                transform: rotate(180deg);
+            }
+
+            .activity-body {
+                max-height: 0;
+                overflow: hidden;
+                transition: max-height 0.3s ease;
+            }
+
+            .activity-body.open {
+                max-height: 260px;
+                overflow-y: auto;
+            }
+
+            .activity-item {
+                padding: 7px 16px;
+                display: flex;
+                align-items: center;
+                gap: 10px;
+                font-size: 0.7rem;
+                border-bottom: 1px solid rgba(255, 255, 255, 0.04);
+            }
+
+            .activity-tag {
+                font-weight: 700;
+                letter-spacing: 0.06em;
+                text-transform: uppercase;
+                width: 42px;
+                flex-shrink: 0;
+            }
+
+            .activity-tag.join {
+                color: var(--green);
+            }
+            .activity-tag.msg {
+                color: var(--blue);
+            }
+            .activity-tag.task {
+                color: var(--yellow);
+            }
+            .activity-tag.update {
+                color: var(--t3);
+            }
+
+            .activity-text {
+                flex: 1;
+                color: var(--t2);
+                font-weight: 300;
+                overflow: hidden;
+                text-overflow: ellipsis;
+                white-space: nowrap;
+            }
+
+            .activity-time {
+                color: var(--t3);
+                font-weight: 300;
+                flex-shrink: 0;
+                font-variant-numeric: tabular-nums;
+            }
+
+            /* ── content ── */
+            .content {
+                flex: 1;
+                display: flex;
+                flex-direction: column;
+                overflow: hidden;
+                background: var(--bg);
+            }
+
+            .content-header {
+                padding: 16px 24px;
+                border-bottom: 1px solid var(--border);
+                flex-shrink: 0;
+                display: flex;
+                align-items: baseline;
+                gap: 10px;
+            }
+
+            .content-title {
+                font-size: 0.9rem;
+                font-weight: 700;
+                color: var(--white);
+                text-transform: uppercase;
+                letter-spacing: 0.1em;
+            }
+
+            .content-sub {
+                font-size: 0.6rem;
+                font-weight: 300;
+                color: var(--t3);
+                letter-spacing: 0.04em;
+            }
+
+            .content-scroll {
+                flex: 1;
+                overflow-y: auto;
+                padding: 20px 24px 100px;
+            }
+
+            /* stats row */
+            .stats-row {
+                display: flex;
+                align-items: center;
+                gap: 14px;
+                padding-bottom: 16px;
+                margin-bottom: 16px;
+                border-bottom: 1px solid var(--t4);
+                font-size: 0.6rem;
+                color: var(--t3);
+            }
+
+            .stat {
+                display: flex;
+                align-items: center;
+                gap: 6px;
+            }
+
+            .stat-dot {
+                width: 5px;
+                height: 5px;
+                border-radius: 50%;
+            }
+
+            .stat-dot.on {
                 background: var(--green);
             }
-            .task-dot.failed {
+            .stat-dot.pending {
+                background: var(--t3);
+            }
+            .stat-dot.running {
+                background: var(--yellow);
+            }
+            .stat-dot.done {
+                background: var(--green);
+            }
+            .stat-dot.failed {
                 background: var(--red);
             }
 
-            .task-agent {
-                font-size: 0.75rem;
+            .stat-sep {
+                color: var(--t4);
+            }
+
+            /* section labels */
+            .section-label {
+                font-size: 0.55rem;
+                font-weight: 700;
+                letter-spacing: 0.2em;
+                text-transform: uppercase;
+                color: var(--t3);
+                margin-bottom: 10px;
+            }
+
+            /* filter tabs */
+            .filter-tabs {
+                display: flex;
+                gap: 4px;
+                margin-bottom: 14px;
+            }
+
+            .filter-tab {
+                appearance: none;
+                -webkit-appearance: none;
+                background: transparent;
+                border: none;
+                border-bottom: 1px solid transparent;
+                color: var(--t3);
+                font-family: var(--font);
+                font-size: 0.55rem;
                 font-weight: 500;
-                color: var(--t2);
+                letter-spacing: 0.06em;
+                text-transform: uppercase;
+                padding: 4px 8px;
+                cursor: pointer;
+                transition: all 0.15s;
+            }
+
+
+            .filter-tab.active {
+                color: var(--white);
+                border-bottom-color: var(--white);
+                font-weight: 700;
+            }
+
+            /* ── task cards ── */
+            .task-card {
+                background: transparent;
+                border-bottom: 1px solid var(--t4);
+                padding: 14px 0;
+                transition: background 0.15s ease;
+            }
+
+
+            .task-top {
+                display: flex;
+                align-items: center;
+                justify-content: space-between;
+                margin-bottom: 4px;
+            }
+
+            .task-status-badge {
+                display: flex;
+                align-items: center;
+                gap: 6px;
+                font-size: 0.55rem;
+                font-weight: 700;
+                letter-spacing: 0.1em;
+                text-transform: uppercase;
+            }
+
+            .task-status-dot {
+                width: 6px;
+                height: 6px;
+                border-radius: 50%;
+                flex-shrink: 0;
+            }
+
+            .task-status-dot.running {
+                animation: pulse 1.5s ease-in-out infinite;
             }
 
             .task-id {
-                font-size: 0.625rem;
-                font-weight: 300;
-                color: var(--t4);
-                margin-left: auto;
+                font-size: 0.5rem;
+                color: var(--t3);
                 font-variant-numeric: tabular-nums;
+            }
+
+            .task-agent {
+                font-size: 0.6rem;
+                color: var(--t3);
+                margin-bottom: 6px;
             }
 
             .task-desc {
-                font-size: 0.8125rem;
-                font-weight: 300;
-                color: var(--t2);
-                line-height: 1.5;
-                padding-left: 16px;
+                font-size: 0.85rem;
+                color: var(--t1);
+                line-height: 1.6;
+                margin-bottom: 4px;
             }
 
-            .task-result {
-                font-size: 0.6875rem;
-                font-weight: 300;
-                color: var(--t4);
-                padding-left: 16px;
-                margin-top: 6px;
+            .task-result-block {
+                background: transparent;
+                border-left: 2px solid var(--t4);
+                padding: 6px 0 6px 12px;
+                font-size: 0.7rem;
+                color: var(--t2);
+                line-height: 1.6;
+                margin-top: 8px;
+                margin-bottom: 4px;
+                white-space: pre-wrap;
+                word-break: break-word;
+                max-height: 120px;
+                overflow-y: auto;
             }
 
             .task-time {
-                font-size: 0.5625rem;
-                font-weight: 300;
-                color: var(--t4);
-                padding-left: 16px;
-                margin-top: 4px;
+                font-size: 0.5rem;
+                color: var(--t3);
+                font-variant-numeric: tabular-nums;
+                margin-top: 6px;
+            }
+
+            /* ── message cards ── */
+            .msg-card {
+                display: flex;
+                gap: 12px;
+                background: transparent;
+                border-bottom: 1px solid var(--t4);
+                padding: 12px 0;
+                transition: background 0.15s ease;
+            }
+
+
+            .msg-avatar {
+                width: 28px;
+                height: 28px;
+                border-radius: 50%;
+                display: flex;
+                align-items: center;
+                justify-content: center;
+                font-size: 0.6rem;
+                font-weight: 700;
+                color: var(--bg);
+                flex-shrink: 0;
+                text-transform: uppercase;
+            }
+
+            .msg-content {
+                flex: 1;
+                min-width: 0;
+            }
+
+            .msg-header {
+                display: flex;
+                align-items: center;
+                justify-content: space-between;
+                margin-bottom: 4px;
+            }
+
+            .msg-sender {
+                font-size: 0.7rem;
+                font-weight: 500;
+                color: var(--white);
+            }
+
+            .msg-time {
+                font-size: 0.5rem;
+                color: var(--t3);
                 font-variant-numeric: tabular-nums;
             }
 
-            /* command bar */
+            .msg-body {
+                font-size: 0.8rem;
+                font-weight: 300;
+                color: var(--t2);
+                line-height: 1.6;
+            }
+
+            /* ── command bar ── */
             .cmdbar {
-                position: fixed;
-                bottom: 0;
-                left: 0;
-                right: 0;
-                background: rgba(0, 0, 0, 0.95);
-                border-top: 1px solid var(--t5);
-                padding: 16px 56px;
-                backdrop-filter: blur(12px);
-                z-index: 100;
+                border-top: 1px solid var(--border);
+                padding: 10px 24px;
+                flex-shrink: 0;
+                background: var(--bg);
             }
 
             .cmdbar-inner {
-                max-width: 1280px;
-                margin: 0 auto;
                 display: flex;
-                gap: 12px;
+                gap: 8px;
                 align-items: center;
             }
 
-            .cmdbar-prompt {
-                font-size: 0.75rem;
-                font-weight: 400;
+            .cmdbar-label {
+                font-size: 0.55rem;
+                font-weight: 500;
                 color: var(--t3);
+                text-transform: uppercase;
+                letter-spacing: 0.1em;
                 flex-shrink: 0;
             }
 
             .cmdbar-select {
-                background: transparent;
-                border: 1px solid var(--t5);
+                appearance: none;
+                -webkit-appearance: none;
+                background: var(--card);
+                border: 1px solid var(--border);
                 color: var(--t2);
                 font-family: var(--font);
-                font-size: 0.75rem;
-                font-weight: 300;
-                padding: 8px 12px;
-                border-radius: 4px;
+                font-size: 0.65rem;
+                font-weight: 400;
+                padding: 6px 24px 6px 8px;
                 outline: none;
-                min-width: 120px;
+                min-width: 90px;
                 cursor: pointer;
+                background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='6'%3E%3Cpath d='M0 0l5 6 5-6z' fill='rgba(255,255,255,0.3)'/%3E%3C/svg%3E");
+                background-repeat: no-repeat;
+                background-position: right 8px center;
+                transition: border-color 0.15s;
             }
 
             .cmdbar-select:focus {
-                border-color: var(--t3);
+                border-color: var(--white);
             }
 
             .cmdbar-select option {
-                background: #111;
-                color: var(--t1);
+                background: var(--card);
+                color: var(--white);
+            }
+
+            .cmdbar-mode {
+                display: flex;
+                flex-shrink: 0;
+            }
+
+            .cmdbar-mode-btn {
+                appearance: none;
+                -webkit-appearance: none;
+                background: var(--card);
+                border: 1px solid var(--border);
+                color: var(--t3);
+                font-family: var(--font);
+                font-size: 0.55rem;
+                font-weight: 700;
+                letter-spacing: 0.1em;
+                text-transform: uppercase;
+                padding: 6px 10px;
+                cursor: pointer;
+                transition: all 0.15s;
+            }
+
+            .cmdbar-mode-btn:last-child {
+                border-left: none;
+            }
+
+            .cmdbar-mode-btn.task-active {
+                background: var(--yellow);
+                color: var(--bg);
+                border-color: var(--yellow);
+            }
+
+            .cmdbar-mode-btn.msg-active {
+                background: var(--blue);
+                color: var(--bg);
+                border-color: var(--blue);
             }
 
             .cmdbar-input {
                 flex: 1;
-                background: transparent;
-                border: 1px solid var(--t5);
+                background: var(--card);
+                border: 1px solid var(--t4);
+                border-radius: 0;
                 color: var(--t1);
                 font-family: var(--font);
-                font-size: 0.8125rem;
+                font-size: 0.8rem;
                 font-weight: 300;
-                padding: 8px 16px;
-                border-radius: 4px;
+                padding: 6px 10px;
                 outline: none;
-            }
-
-            .cmdbar-input::placeholder {
-                color: var(--t4);
+                transition: border-color 0.15s;
             }
 
             .cmdbar-input:focus {
-                border-color: var(--t3);
+                border-color: var(--white);
+            }
+
+            .cmdbar-input::placeholder {
+                color: var(--t3);
             }
 
             .cmdbar-send {
-                background: transparent;
-                border: 1px solid var(--t5);
-                color: var(--t3);
+                appearance: none;
+                -webkit-appearance: none;
+                border: none;
                 font-family: var(--font);
-                font-size: 0.6875rem;
-                font-weight: 400;
+                font-size: 0.55rem;
+                font-weight: 700;
                 letter-spacing: 0.1em;
                 text-transform: uppercase;
-                padding: 8px 20px;
-                border-radius: 4px;
+                padding: 7px 14px;
                 cursor: pointer;
-                transition: all 0.15s ease;
+                transition: opacity 0.15s;
             }
 
             .cmdbar-send:hover {
-                border-color: var(--t2);
-                color: var(--t1);
+                opacity: 0.8;
             }
 
-            /* empty */
+            .cmdbar-send.task-mode {
+                background: var(--yellow);
+                color: var(--bg);
+            }
+
+            .cmdbar-send.msg-mode {
+                background: var(--blue);
+                color: var(--bg);
+            }
+
+            /* ── empty states ── */
             .empty {
                 padding: 40px 0;
                 text-align: center;
                 font-size: 0.75rem;
                 font-weight: 300;
+                color: var(--t3);
+                line-height: 2;
+            }
+
+            .empty-hint {
+                font-size: 0.6rem;
                 color: var(--t4);
             }
 
-            /* animation */
-            @keyframes enter {
-                from {
-                    opacity: 0;
-                    transform: translateY(-4px);
-                }
-                to {
-                    opacity: 1;
-                    transform: translateY(0);
-                }
+            /* ── tasks section spacing ── */
+            .tasks-section {
+                margin-top: 28px;
             }
 
-            .anim {
-                animation: enter 0.25s ease-out;
+            /* ── keyframes ── */
+            @keyframes pulse {
+                0%,
+                100% {
+                    opacity: 1;
+                }
+                50% {
+                    opacity: 0.3;
+                }
             }
         </style>
     </head>
     <body>
         <div class="shell">
-            <div class="head">
-                <div class="logo">talktome</div>
-                <div class="status">
-                    <span class="status-text" id="st">--</span>
-                    <div class="tick-bar">
-                        <div class="tick-fill" id="tf"></div>
-                    </div>
+            <div class="sidebar">
+                <div class="sidebar-header" id="home-btn">
+                    <span class="logo">talktome</span>
+                    <div class="health-dot" id="hd"></div>
                 </div>
-            </div>
-
-            <div class="layout">
-                <div>
-                    <div class="label">
+                <div class="sidebar-scroll">
+                    <div class="sb-label">
                         <span>agents</span>
-                        <span class="label-num" id="ac">0</span>
+                        <span class="sb-count" id="agent-count">0</span>
                     </div>
-                    <div class="agents" id="ag"></div>
-                </div>
-                <div>
-                    <div class="label">
-                        <span>activity</span>
-                        <span class="label-num" id="mc">0</span>
+                    <div id="agent-list"></div>
+
+                    <div class="activity-section">
+                        <div class="activity-header" id="activity-toggle">
+                            <span>activity</span>
+                            <span
+                                class="sb-count"
+                                id="activity-count"
+                            >
+                                0
+                            </span>
+                            <span class="activity-arrow"
+                                >&#9662;</span
+                            >
+                        </div>
+                        <div class="activity-body" id="activity-body">
+                            <div id="activity-list"></div>
+                        </div>
                     </div>
-                    <div class="feed" id="fd"></div>
-                </div>
-                <div class="col-tasks">
-                    <div class="label">
-                        <span>tasks</span>
-                        <span class="label-num" id="tc">0</span>
-                    </div>
-                    <div id="tl"></div>
                 </div>
             </div>
-        </div>
 
-        <div class="cmdbar">
-            <div class="cmdbar-inner">
-                <span class="cmdbar-prompt">&gt;</span>
-                <select class="cmdbar-select" id="cmd-agent">
-                    <option value="">agent</option>
-                </select>
-                <input
-                    class="cmdbar-input"
-                    id="cmd-input"
-                    type="text"
-                    placeholder="assign a task..."
-                    autocomplete="off"
-                />
-                <button class="cmdbar-send" id="cmd-send">send</button>
+            <div class="content">
+                <div class="content-header">
+                    <div class="content-title" id="content-title">
+                        overview
+                    </div>
+                    <div
+                        class="content-sub"
+                        id="content-sub"
+                    ></div>
+                </div>
+                <div class="content-scroll" id="content-area"></div>
+
+                <div class="cmdbar">
+                    <div class="cmdbar-inner">
+                        <span class="cmdbar-label">to:</span>
+                        <select class="cmdbar-select" id="cmd-agent">
+                            <option value="">agent</option>
+                        </select>
+                        <div class="cmdbar-mode">
+                            <button
+                                class="cmdbar-mode-btn task-active"
+                                id="mode-task"
+                            >
+                                task
+                            </button>
+                            <button
+                                class="cmdbar-mode-btn"
+                                id="mode-msg"
+                            >
+                                msg
+                            </button>
+                        </div>
+                        <input
+                            class="cmdbar-input"
+                            id="cmd-input"
+                            type="text"
+                            placeholder="assign a task..."
+                            autocomplete="off"
+                        />
+                        <button
+                            class="cmdbar-send task-mode"
+                            id="cmd-send"
+                        >
+                            send
+                        </button>
+                    </div>
+                </div>
             </div>
         </div>
 
         <script>
             (function () {
-                var POLL = 3000,
-                    ps = Date.now(),
-                    aLen = 0,
-                    aJSON = "",
-                    tJSON = "",
-                    agentNames = [];
+                var POLL = 3000;
+
+                var state = {
+                    selectedAgent: null,
+                    mode: "task",
+                    taskFilter: "all",
+                    activityOpen: false,
+                    agentNames: [],
+                    agentPaths: {},
+                    agentsJSON: "",
+                    activityJSON: "",
+                    contentJSON: "",
+                    cachedTasks: [],
+                    cachedPeek: null,
+                };
 
                 function txt(el, s) {
                     el.textContent = s || "";
                 }
+
                 function mk(t, c) {
                     var e = document.createElement(t);
                     if (c) e.className = c;
@@ -546,7 +843,9 @@
                     if (s < 5) return "now";
                     if (s < 60) return s + "s";
                     if (s < 3600) return Math.floor(s / 60) + "m";
-                    return Math.floor(s / 3600) + "h";
+                    if (s < 86400)
+                        return Math.floor(s / 3600) + "h";
+                    return Math.floor(s / 86400) + "d";
                 }
 
                 function get(u) {
@@ -560,279 +859,824 @@
                         });
                 }
 
-                function health() {
+                function shortPath(p) {
+                    if (!p) return "";
+                    var clean = p
+                        .replace(/\\/g, "/")
+                        .replace(/\/+$/, "");
+                    var parts = clean.split("/");
+                    if (parts.length >= 2)
+                        return parts.slice(-2).join("/");
+                    return parts[parts.length - 1] || "";
+                }
+
+                function escHtml(s) {
+                    var d = document.createElement("div");
+                    d.textContent = s;
+                    return d.innerHTML;
+                }
+
+                function avatarColor(name) {
+                    var colors = [
+                        "#ff6b6b",
+                        "#ffd93d",
+                        "#6bcb77",
+                        "#4d96ff",
+                        "#ff922b",
+                        "#845ef7",
+                        "#20c997",
+                        "#e64980",
+                    ];
+                    var hash = 0;
+                    for (var i = 0; i < name.length; i++) {
+                        hash =
+                            name.charCodeAt(i) +
+                            ((hash << 5) - hash);
+                    }
+                    return colors[Math.abs(hash) % colors.length];
+                }
+
+                function statusColor(s) {
+                    if (s === "done") return "#00ff88";
+                    if (s === "running") return "#ffcc00";
+                    if (s === "failed") return "#ff3333";
+                    return "rgba(255,255,255,0.25)";
+                }
+
+                // agent selection
+                function selectAgent(name) {
+                    state.selectedAgent = name;
+                    state.taskFilter = "all";
+                    state.contentJSON = "";
+
+                    var cards =
+                        document.querySelectorAll(".agent-card");
+                    for (var i = 0; i < cards.length; i++) {
+                        cards[i].classList.remove("active");
+                    }
+                    if (name) {
+                        var el = document.getElementById(
+                            "sb-agent-" + name,
+                        );
+                        if (el) el.classList.add("active");
+                    }
+
+                    txt(
+                        document.getElementById("content-title"),
+                        name || "overview",
+                    );
+                    txt(
+                        document.getElementById("content-sub"),
+                        name
+                            ? shortPath(
+                                  state.agentPaths[name] || "",
+                              )
+                            : "",
+                    );
+
+                    document.getElementById("cmd-agent").value =
+                        name || "";
+                    renderContent();
+                }
+
+                document
+                    .getElementById("home-btn")
+                    .addEventListener("click", function () {
+                        selectAgent(null);
+                    });
+
+                // activity accordion
+                document
+                    .getElementById("activity-toggle")
+                    .addEventListener("click", function () {
+                        state.activityOpen = !state.activityOpen;
+                        document
+                            .getElementById("activity-toggle")
+                            .classList.toggle(
+                                "open",
+                                state.activityOpen,
+                            );
+                        document
+                            .getElementById("activity-body")
+                            .classList.toggle(
+                                "open",
+                                state.activityOpen,
+                            );
+                    });
+
+                // command bar mode
+                function setMode(m) {
+                    state.mode = m;
+                    var taskBtn =
+                        document.getElementById("mode-task");
+                    var msgBtn =
+                        document.getElementById("mode-msg");
+                    var sendBtn =
+                        document.getElementById("cmd-send");
+
+                    taskBtn.className =
+                        "cmdbar-mode-btn" +
+                        (m === "task" ? " task-active" : "");
+                    msgBtn.className =
+                        "cmdbar-mode-btn" +
+                        (m === "message" ? " msg-active" : "");
+                    sendBtn.className =
+                        "cmdbar-send " +
+                        (m === "task" ? "task-mode" : "msg-mode");
+
+                    document.getElementById(
+                        "cmd-input",
+                    ).placeholder =
+                        m === "task"
+                            ? "assign a task..."
+                            : "send a message...";
+                }
+
+                document
+                    .getElementById("mode-task")
+                    .addEventListener("click", function () {
+                        setMode("task");
+                    });
+                document
+                    .getElementById("mode-msg")
+                    .addEventListener("click", function () {
+                        setMode("message");
+                    });
+
+                // polling
+                function pollHealth() {
                     return get("/health").then(function (d) {
-                        var st = document.getElementById("st");
+                        var dot = document.getElementById("hd");
                         if (d && d.status === "ok") {
-                            st.className = "status-text on";
-                            txt(st, "live");
+                            dot.classList.add("on");
                         } else {
-                            st.className = "status-text";
-                            txt(st, "offline");
+                            dot.classList.remove("on");
                         }
                     });
                 }
 
-                function agents() {
+                function pollAgents() {
                     return get("/agents").then(function (data) {
-                        var el = document.getElementById("ag"),
-                            ct = document.getElementById("ac");
-                        if (!data || !data.length) {
-                            if (aJSON !== "[]") {
-                                el.innerHTML = "";
-                                var em = mk("div", "empty");
-                                txt(em, "no agents");
-                                el.appendChild(em);
-                                txt(ct, "0");
-                                aJSON = "[]";
-                                agentNames = [];
-                                updateAgentSelect();
-                            }
+                        if (!data) return;
+                        var j = JSON.stringify(data);
+                        if (j === state.agentsJSON) return;
+                        state.agentsJSON = j;
+                        txt(
+                            document.getElementById(
+                                "agent-count",
+                            ),
+                            String(data.length),
+                        );
+
+                        state.agentNames = [];
+                        state.agentPaths = {};
+                        var list =
+                            document.getElementById("agent-list");
+                        list.innerHTML = "";
+
+                        if (!data.length) {
+                            var em = mk("div", "empty");
+                            em.style.padding = "16px";
+                            em.style.textAlign = "left";
+                            em.style.fontSize = "0.65rem";
+                            txt(em, "no agents online");
+                            list.appendChild(em);
+                            updateAgentSelect();
                             return;
                         }
-                        var j = JSON.stringify(data);
-                        if (j === aJSON) return;
-                        aJSON = j;
-                        txt(ct, String(data.length));
-                        el.innerHTML = "";
-                        agentNames = [];
+
                         for (var i = 0; i < data.length; i++) {
                             var a = data[i];
-                            agentNames.push(a.name);
-                            var card = mk("div", "agent");
-                            var info = mk("div", "agent-info");
+                            state.agentNames.push(a.name);
+                            state.agentPaths[a.name] = a.path;
+
+                            var card = mk("div", "agent-card");
+                            card.id = "sb-agent-" + a.name;
+                            if (state.selectedAgent === a.name) {
+                                card.classList.add("active");
+                            }
+
+                            (function (agentName) {
+                                card.addEventListener(
+                                    "click",
+                                    function () {
+                                        selectAgent(agentName);
+                                    },
+                                );
+                            })(a.name);
+
                             var dot = mk("div", "agent-dot");
-                            var meta = mk("div", "agent-meta");
-                            var nm = mk("div", "agent-name");
-                            txt(nm, a.name);
-                            var pt = mk("div", "agent-path");
-                            txt(pt, a.path);
-                            meta.appendChild(nm);
-                            meta.appendChild(pt);
-                            info.appendChild(dot);
-                            info.appendChild(meta);
-                            var bd = mk(
-                                "div",
-                                "agent-badge" +
-                                    (a.mailbox_count > 0 ? " active" : ""),
+                            dot.classList.add(
+                                a.status === "active"
+                                    ? "on"
+                                    : "off",
                             );
-                            txt(
-                                bd,
-                                a.mailbox_count > 0
-                                    ? String(a.mailbox_count)
-                                    : "",
-                            );
+                            card.appendChild(dot);
+
+                            var info = mk("div", "agent-info");
+                            var name = mk("div", "agent-name");
+                            txt(name, a.name);
+                            info.appendChild(name);
+
+                            if (a.path) {
+                                var path = mk(
+                                    "div",
+                                    "agent-path",
+                                );
+                                txt(path, shortPath(a.path));
+                                info.appendChild(path);
+                            }
+
                             card.appendChild(info);
-                            card.appendChild(bd);
-                            el.appendChild(card);
+
+                            if (a.mailbox_count > 0) {
+                                var badge = mk(
+                                    "span",
+                                    "agent-badge",
+                                );
+                                txt(badge, a.mailbox_count);
+                                card.appendChild(badge);
+                            }
+
+                            list.appendChild(card);
                         }
                         updateAgentSelect();
                     });
                 }
 
                 function updateAgentSelect() {
-                    var sel = document.getElementById("cmd-agent");
+                    var sel =
+                        document.getElementById("cmd-agent");
                     var cur = sel.value;
                     sel.innerHTML = "";
                     var def = mk("option");
                     def.value = "";
                     txt(def, "agent");
                     sel.appendChild(def);
-                    for (var i = 0; i < agentNames.length; i++) {
+                    for (
+                        var i = 0;
+                        i < state.agentNames.length;
+                        i++
+                    ) {
                         var opt = mk("option");
-                        opt.value = agentNames[i];
-                        txt(opt, agentNames[i]);
+                        opt.value = state.agentNames[i];
+                        txt(opt, state.agentNames[i]);
                         sel.appendChild(opt);
                     }
-                    if (cur && agentNames.indexOf(cur) >= 0) sel.value = cur;
+                    if (
+                        cur &&
+                        state.agentNames.indexOf(cur) >= 0
+                    )
+                        sel.value = cur;
                 }
 
-                function activity() {
+                function pollActivity() {
                     return get("/activity").then(function (data) {
-                        var el = document.getElementById("fd"),
-                            ct = document.getElementById("mc");
-                        if (!data || !data.length) {
-                            if (!aLen) {
-                                el.innerHTML = "";
-                                var em = mk("div", "empty");
-                                txt(em, "no activity");
-                                el.appendChild(em);
-                            }
-                            return;
-                        }
-                        if (data.length === aLen) return;
-                        var nw = data.slice(aLen),
-                            first = !aLen;
-                        aLen = data.length;
-                        if (first) el.innerHTML = "";
-                        txt(ct, String(data.length));
-                        for (var i = 0; i < nw.length; i++) {
-                            var it = nw[i];
-                            var d = mk("div", "msg" + (first ? "" : " anim"));
-                            var mt = mk("div", "msg-meta");
-
-                            if (it.event === "message") {
-                                var fl = mk("span", "msg-label");
-                                txt(fl, "From");
-                                var fn = mk("span", "msg-name");
-                                txt(fn, it.sender);
-                                var tl = mk("span", "msg-label");
-                                txt(tl, "To");
-                                var tn = mk("span", "msg-name");
-                                txt(tn, it.peer);
-                                var ts = mk("span", "msg-ts");
-                                txt(ts, ago(it.timestamp));
-                                mt.appendChild(fl);
-                                mt.appendChild(fn);
-                                mt.appendChild(ts);
-                                mt.appendChild(tl);
-                                mt.appendChild(tn);
-                                var bd = mk("div", "msg-body");
-                                txt(bd, it.content || "");
-                                d.appendChild(mt);
-                                d.appendChild(bd);
-                            } else if (
-                                it.event === "task_created" ||
-                                it.event === "task_updated"
-                            ) {
-                                var el2 = mk("span", "msg-label");
-                                txt(el2, it.event === "task_created" ? "Task" : "Update");
-                                var en = mk("span", "msg-name");
-                                txt(en, it.agent || it.task_id || "");
-                                var ts2 = mk("span", "msg-ts");
-                                txt(ts2, ago(it.timestamp));
-                                mt.appendChild(el2);
-                                mt.appendChild(en);
-                                mt.appendChild(ts2);
-                                if (it.event === "task_created") {
-                                    var sl = mk("span", "msg-label");
-                                    txt(sl, "Desc");
-                                    var sn = mk("span", "msg-name");
-                                    txt(sn, it.description || "");
-                                    mt.appendChild(sl);
-                                    mt.appendChild(sn);
-                                } else {
-                                    var sl2 = mk("span", "msg-label");
-                                    txt(sl2, "Status");
-                                    var sn2 = mk("span", "msg-name");
-                                    txt(sn2, it.status || "");
-                                    mt.appendChild(sl2);
-                                    mt.appendChild(sn2);
-                                }
-                                d.appendChild(mt);
-                            } else if (it.event === "register") {
-                                var rl = mk("span", "msg-label");
-                                txt(rl, "Join");
-                                var rn = mk("span", "msg-name");
-                                txt(rn, it.agent || "");
-                                var rts = mk("span", "msg-ts");
-                                txt(rts, ago(it.timestamp));
-                                mt.appendChild(rl);
-                                mt.appendChild(rn);
-                                mt.appendChild(rts);
-                                var rl2 = mk("span", "msg-label");
-                                txt(rl2, "Path");
-                                var rp = mk("span", "msg-name");
-                                txt(rp, it.path || "");
-                                mt.appendChild(rl2);
-                                mt.appendChild(rp);
-                                d.appendChild(mt);
-                            } else {
-                                continue;
-                            }
-                            el.prepend(d);
-                        }
-                    });
-                }
-
-                function tasks() {
-                    return get("/tasks").then(function (data) {
-                        var el = document.getElementById("tl"),
-                            ct = document.getElementById("tc");
                         if (!data) return;
                         var j = JSON.stringify(data);
-                        if (j === tJSON) return;
-                        tJSON = j;
-                        txt(ct, String(data.length));
-                        el.innerHTML = "";
-                        if (!data.length) {
-                            var em = mk("div", "empty");
-                            txt(em, "no tasks");
-                            el.appendChild(em);
-                            return;
-                        }
-                        for (var i = 0; i < data.length; i++) {
-                            var t = data[i];
-                            var card = mk("div", "task");
-                            var hdr = mk("div", "task-header");
-                            var dot = mk("div", "task-dot " + t.status);
-                            var agent = mk("span", "task-agent");
-                            txt(agent, t.agent);
-                            var tid = mk("span", "task-id");
-                            txt(tid, t.id);
-                            hdr.appendChild(dot);
-                            hdr.appendChild(agent);
-                            hdr.appendChild(tid);
-                            card.appendChild(hdr);
-                            var desc = mk("div", "task-desc");
-                            txt(desc, t.description);
-                            card.appendChild(desc);
-                            if (t.result) {
-                                var res = mk("div", "task-result");
-                                txt(res, t.result);
-                                card.appendChild(res);
+                        if (j === state.activityJSON) return;
+                        state.activityJSON = j;
+
+                        txt(
+                            document.getElementById(
+                                "activity-count",
+                            ),
+                            String(data.length),
+                        );
+
+                        var list = document.getElementById(
+                            "activity-list",
+                        );
+                        list.innerHTML = "";
+
+                        for (
+                            var i = data.length - 1;
+                            i >= 0;
+                            i--
+                        ) {
+                            var it = data[i];
+                            var item = mk(
+                                "div",
+                                "activity-item",
+                            );
+                            var tag = mk(
+                                "span",
+                                "activity-tag",
+                            );
+                            var text = mk(
+                                "span",
+                                "activity-text",
+                            );
+                            var time = mk(
+                                "span",
+                                "activity-time",
+                            );
+                            txt(time, ago(it.timestamp));
+
+                            if (it.event === "register") {
+                                tag.classList.add("join");
+                                txt(tag, "join");
+                                txt(text, it.agent || "");
+                            } else if (
+                                it.event === "message"
+                            ) {
+                                tag.classList.add("msg");
+                                txt(tag, "msg");
+                                txt(
+                                    text,
+                                    (it.sender || "?") +
+                                        " \u2192 " +
+                                        (it.peer || "?"),
+                                );
+                            } else if (
+                                it.event === "task_created"
+                            ) {
+                                tag.classList.add("task");
+                                txt(tag, "task");
+                                txt(
+                                    text,
+                                    (it.agent || "") +
+                                        ": " +
+                                        (it.description || ""),
+                                );
+                            } else if (
+                                it.event === "task_updated"
+                            ) {
+                                tag.classList.add("update");
+                                txt(tag, "upd");
+                                txt(
+                                    text,
+                                    (it.task_id || "") +
+                                        " \u2192 " +
+                                        (it.status || ""),
+                                );
+                            } else {
+                                txt(tag, it.event);
                             }
-                            var tm = mk("div", "task-time");
-                            txt(tm, ago(t.created_at));
-                            card.appendChild(tm);
-                            el.appendChild(card);
+
+                            item.appendChild(tag);
+                            item.appendChild(text);
+                            item.appendChild(time);
+                            list.appendChild(item);
                         }
                     });
                 }
 
-                // command bar
-                function sendTask() {
-                    var sel = document.getElementById("cmd-agent");
-                    var inp = document.getElementById("cmd-input");
+                // content rendering
+                function renderContent() {
+                    var agent = state.selectedAgent;
+
+                    if (agent) {
+                        Promise.all([
+                            get("/peek/" + agent),
+                            get("/tasks/" + agent),
+                        ]).then(function (results) {
+                            var peek = results[0] || {
+                                count: 0,
+                                messages: [],
+                            };
+                            var tasks = results[1] || [];
+                            state.cachedTasks = tasks;
+                            state.cachedPeek = peek;
+
+                            var j = JSON.stringify([
+                                peek,
+                                tasks,
+                                state.taskFilter,
+                            ]);
+                            if (j === state.contentJSON) return;
+                            state.contentJSON = j;
+
+                            renderAgentView(peek, tasks);
+                        });
+                    } else {
+                        get("/tasks").then(function (tasks) {
+                            tasks = tasks || [];
+                            state.cachedTasks = tasks;
+
+                            var j = JSON.stringify([
+                                tasks,
+                                state.taskFilter,
+                            ]);
+                            if (j === state.contentJSON) return;
+                            state.contentJSON = j;
+
+                            renderOverview(tasks);
+                        });
+                    }
+                }
+
+                function renderOverview(tasks) {
+                    var area =
+                        document.getElementById("content-area");
+                    area.innerHTML = "";
+
+                    // stats row
+                    var counts = {
+                        pending: 0,
+                        running: 0,
+                        done: 0,
+                        failed: 0,
+                    };
+                    for (var i = 0; i < tasks.length; i++) {
+                        var s = tasks[i].status;
+                        if (counts[s] !== undefined)
+                            counts[s]++;
+                    }
+
+                    var stats = mk("div", "stats-row");
+                    addStat(
+                        stats,
+                        "on",
+                        state.agentNames.length + " agents",
+                    );
+                    addSep(stats);
+                    addStat(
+                        stats,
+                        "pending",
+                        counts.pending + " pending",
+                    );
+                    addSep(stats);
+                    addStat(
+                        stats,
+                        "running",
+                        counts.running + " running",
+                    );
+                    addSep(stats);
+                    addStat(
+                        stats,
+                        "done",
+                        counts.done + " done",
+                    );
+                    if (counts.failed > 0) {
+                        addSep(stats);
+                        addStat(
+                            stats,
+                            "failed",
+                            counts.failed + " failed",
+                        );
+                    }
+                    area.appendChild(stats);
+
+                    // section label
+                    var label = mk("div", "section-label");
+                    txt(label, "tasks (" + tasks.length + ")");
+                    area.appendChild(label);
+
+                    // filter tabs
+                    var tabsEl = mk("div", "filter-tabs");
+                    tabsEl.id = "filter-tabs";
+                    renderFilterTabs(tasks, tabsEl);
+                    area.appendChild(tabsEl);
+
+                    // task list
+                    var listEl = mk("div", "");
+                    listEl.id = "task-list";
+                    renderTaskList(tasks, listEl);
+                    area.appendChild(listEl);
+                }
+
+                function renderAgentView(peek, tasks) {
+                    var area =
+                        document.getElementById("content-area");
+                    area.innerHTML = "";
+
+                    // messages section
+                    var msgLabel = mk("div", "section-label");
+                    txt(
+                        msgLabel,
+                        "messages (" + peek.count + ")",
+                    );
+                    area.appendChild(msgLabel);
+
+                    if (
+                        !peek.messages ||
+                        !peek.messages.length
+                    ) {
+                        var em = mk("div", "empty");
+                        em.innerHTML =
+                            "no messages<br><span class='empty-hint'>agents will reply here</span>";
+                        area.appendChild(em);
+                    } else {
+                        for (
+                            var i = 0;
+                            i < peek.messages.length;
+                            i++
+                        ) {
+                            area.appendChild(
+                                buildMsgCard(peek.messages[i]),
+                            );
+                        }
+                    }
+
+                    // tasks section
+                    var section = mk("div", "tasks-section");
+                    var label = mk("div", "section-label");
+                    txt(label, "tasks (" + tasks.length + ")");
+                    section.appendChild(label);
+
+                    var tabsEl = mk("div", "filter-tabs");
+                    tabsEl.id = "filter-tabs";
+                    renderFilterTabs(tasks, tabsEl);
+                    section.appendChild(tabsEl);
+
+                    var listEl = mk("div", "");
+                    listEl.id = "task-list";
+                    renderTaskList(tasks, listEl);
+                    section.appendChild(listEl);
+
+                    area.appendChild(section);
+                }
+
+                function renderFilterTabs(tasks, container) {
+                    var counts = {
+                        all: tasks.length,
+                        pending: 0,
+                        running: 0,
+                        done: 0,
+                        failed: 0,
+                    };
+                    for (var i = 0; i < tasks.length; i++) {
+                        var s = tasks[i].status;
+                        if (counts[s] !== undefined)
+                            counts[s]++;
+                    }
+
+                    container.innerHTML = "";
+                    var filters = [
+                        "all",
+                        "pending",
+                        "running",
+                        "done",
+                    ];
+                    if (counts.failed > 0)
+                        filters.push("failed");
+
+                    for (var f = 0; f < filters.length; f++) {
+                        var name = filters[f];
+                        var btn = mk(
+                            "button",
+                            "filter-tab" +
+                                (state.taskFilter === name
+                                    ? " active"
+                                    : ""),
+                        );
+                        txt(
+                            btn,
+                            name + " (" + counts[name] + ")",
+                        );
+                        (function (filterName) {
+                            btn.addEventListener(
+                                "click",
+                                function () {
+                                    state.taskFilter =
+                                        filterName;
+                                    state.contentJSON = "";
+                                    var tabsEl =
+                                        document.getElementById(
+                                            "filter-tabs",
+                                        );
+                                    var listEl =
+                                        document.getElementById(
+                                            "task-list",
+                                        );
+                                    if (tabsEl && listEl) {
+                                        renderFilterTabs(
+                                            state.cachedTasks,
+                                            tabsEl,
+                                        );
+                                        renderTaskList(
+                                            state.cachedTasks,
+                                            listEl,
+                                        );
+                                    }
+                                },
+                            );
+                        })(name);
+                        container.appendChild(btn);
+                    }
+                }
+
+                function renderTaskList(tasks, container) {
+                    container.innerHTML = "";
+                    var filtered =
+                        state.taskFilter === "all"
+                            ? tasks
+                            : tasks.filter(function (t) {
+                                  return (
+                                      t.status ===
+                                      state.taskFilter
+                                  );
+                              });
+
+                    if (!filtered.length) {
+                        var em = mk("div", "empty");
+                        if (state.taskFilter === "all") {
+                            em.innerHTML =
+                                "no tasks yet<br><span class='empty-hint'>select an agent and assign one below</span>";
+                        } else {
+                            txt(
+                                em,
+                                "no " +
+                                    state.taskFilter +
+                                    " tasks",
+                            );
+                        }
+                        container.appendChild(em);
+                        return;
+                    }
+
+                    for (
+                        var i = 0;
+                        i < filtered.length;
+                        i++
+                    ) {
+                        container.appendChild(
+                            buildTaskCard(filtered[i]),
+                        );
+                    }
+                }
+
+                function buildTaskCard(t) {
+                    var card = mk("div", "task-card");
+                    // status shown by dot + badge text only
+
+                    // top row: status badge + task id
+                    var top = mk("div", "task-top");
+                    var badge = mk("span", "task-status-badge");
+                    badge.style.color = statusColor(t.status);
+                    var dot = mk(
+                        "span",
+                        "task-status-dot" +
+                            (t.status === "running"
+                                ? " running"
+                                : ""),
+                    );
+                    dot.style.background = statusColor(t.status);
+                    badge.appendChild(dot);
+                    var statusText = document.createTextNode(
+                        " " + t.status,
+                    );
+                    badge.appendChild(statusText);
+                    top.appendChild(badge);
+
+                    var tid = mk("span", "task-id");
+                    txt(tid, t.id);
+                    top.appendChild(tid);
+                    card.appendChild(top);
+
+                    // agent name
+                    var agent = mk("div", "task-agent");
+                    txt(agent, t.agent);
+                    card.appendChild(agent);
+
+                    // description
+                    var desc = mk("div", "task-desc");
+                    txt(desc, t.description);
+                    card.appendChild(desc);
+
+                    // result block
+                    if (t.result) {
+                        var res = mk(
+                            "div",
+                            "task-result-block",
+                        );
+                        txt(res, t.result);
+                        card.appendChild(res);
+                    }
+
+                    // timestamp
+                    var tm = mk("div", "task-time");
+                    txt(tm, ago(t.created_at));
+                    card.appendChild(tm);
+
+                    return card;
+                }
+
+                function buildMsgCard(m) {
+                    var card = mk("div", "msg-card");
+
+                    // avatar
+                    var senderName = m.from || "unknown";
+                    var avatar = mk("div", "msg-avatar");
+                    avatar.style.background =
+                        avatarColor(senderName);
+                    txt(avatar, senderName.charAt(0));
+                    card.appendChild(avatar);
+
+                    // content
+                    var content = mk("div", "msg-content");
+
+                    var header = mk("div", "msg-header");
+                    var sender = mk("span", "msg-sender");
+                    txt(sender, senderName);
+                    header.appendChild(sender);
+                    var time = mk("span", "msg-time");
+                    txt(time, ago(m.timestamp));
+                    header.appendChild(time);
+                    content.appendChild(header);
+
+                    var body = mk("div", "msg-body");
+                    txt(body, m.message);
+                    content.appendChild(body);
+
+                    card.appendChild(content);
+                    return card;
+                }
+
+                function addStat(parent, cls, text) {
+                    var span = mk("span", "stat");
+                    var dot = mk("span", "stat-dot " + cls);
+                    span.appendChild(dot);
+                    span.appendChild(
+                        document.createTextNode(" " + text),
+                    );
+                    parent.appendChild(span);
+                }
+
+                function addSep(parent) {
+                    var sep = mk("span", "stat-sep");
+                    txt(sep, "\u00b7");
+                    parent.appendChild(sep);
+                }
+
+                // send command
+                function send() {
+                    var sel =
+                        document.getElementById("cmd-agent");
+                    var inp =
+                        document.getElementById("cmd-input");
                     var agent = sel.value;
-                    var desc = inp.value.trim();
-                    if (!agent || !desc) return;
-                    fetch("/task", {
-                        method: "POST",
-                        headers: { "Content-Type": "application/json" },
-                        body: JSON.stringify({
-                            agent: agent,
-                            description: desc,
-                        }),
-                    })
-                        .then(function () {
-                            inp.value = "";
-                            tick();
+                    var text = inp.value.trim();
+                    if (!agent || !text) return;
+
+                    if (state.mode === "task") {
+                        fetch("/task", {
+                            method: "POST",
+                            headers: {
+                                "Content-Type":
+                                    "application/json",
+                            },
+                            body: JSON.stringify({
+                                agent: agent,
+                                description: text,
+                            }),
                         })
-                        .catch(function () {});
+                            .then(function () {
+                                inp.value = "";
+                                tick();
+                            })
+                            .catch(function () {});
+                    } else {
+                        fetch("/send", {
+                            method: "POST",
+                            headers: {
+                                "Content-Type":
+                                    "application/json",
+                            },
+                            body: JSON.stringify({
+                                sender: "dashboard",
+                                peer: agent,
+                                message: text,
+                            }),
+                        })
+                            .then(function () {
+                                inp.value = "";
+                                tick();
+                            })
+                            .catch(function () {});
+                    }
                 }
 
                 document
                     .getElementById("cmd-send")
-                    .addEventListener("click", sendTask);
+                    .addEventListener("click", send);
                 document
                     .getElementById("cmd-input")
                     .addEventListener("keydown", function (e) {
-                        if (e.key === "Enter") sendTask();
+                        if (e.key === "Enter") send();
                     });
 
-                function bar() {
-                    var p = Math.min(((Date.now() - ps) / POLL) * 100, 100);
-                    document.getElementById("tf").style.width = p + "%";
-                    requestAnimationFrame(bar);
+                function tick() {
+                    pollHealth();
+                    pollAgents();
+                    pollActivity();
+                    renderContent();
                 }
 
-                function tick() {
-                    ps = Date.now();
-                    Promise.all([health(), agents(), activity(), tasks()]);
-                }
-                bar();
-                tick();
+                // register dashboard as a peer so agents can message it
+                fetch("/register", {
+                    method: "POST",
+                    headers: {
+                        "Content-Type": "application/json",
+                    },
+                    body: JSON.stringify({
+                        name: "dashboard",
+                        path: "dashboard",
+                    }),
+                }).then(function () {
+                    tick();
+                });
                 setInterval(tick, POLL);
             })();
         </script>
