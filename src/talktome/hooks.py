@@ -64,16 +64,17 @@ def is_bridge_running():
 
 def start_bridge():
     # start the bridge server in the background using the global binary
+    # pass --no-browser so auto started servers dont open browser tabs
     if sys.platform == "win32":
         subprocess.Popen(
-            ["talktome"],
+            ["talktome", "--no-browser"],
             creationflags=subprocess.CREATE_NEW_PROCESS_GROUP | subprocess.DETACHED_PROCESS,
             stdout=subprocess.DEVNULL,
             stderr=subprocess.DEVNULL,
         )
     else:
         subprocess.Popen(
-            ["talktome"],
+            ["talktome", "--no-browser"],
             start_new_session=True,
             stdout=subprocess.DEVNULL,
             stderr=subprocess.DEVNULL,
@@ -206,7 +207,9 @@ def hook_inbox():
                 f"call bridge_read_mailbox('{name}') to read and respond."
             )
     except (urllib.error.URLError, OSError):
-        pass
+        # bridge unreachable, try to restart it as a fallback
+        ensure_bridge()
+        sys.exit(0)
 
     try:
         req = urllib.request.Request(f"{BRIDGE_URL}/tasks/{name}/pending")
@@ -254,6 +257,18 @@ def hook_mailbox():
         sys.exit(0)
 
     if data["count"] == 0:
+        # no pending messages, mark agent as inactive before stopping
+        try:
+            payload = json.dumps({"name": name}).encode()
+            req = urllib.request.Request(
+                f"{BRIDGE_URL}/deregister",
+                data=payload,
+                headers={"Content-Type": "application/json"},
+                method="POST",
+            )
+            urllib.request.urlopen(req, timeout=3)
+        except (urllib.error.URLError, OSError):
+            pass
         sys.exit(0)
 
     # messages waiting, block claude from stopping

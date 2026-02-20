@@ -115,6 +115,17 @@ async def register_rest(request):
     return JSONResponse(entry)
 
 
+@mcp.custom_route("/deregister", methods=["POST"])
+async def deregister_rest(request):
+    body = await request.json()
+    name = body.get("name", "")
+    if not name:
+        return JSONResponse({"error": "name required"}, status_code=400)
+    registry.update_status(name, "inactive")
+    db.log_activity("deregister", agent=name)
+    return JSONResponse({"result": f"{name} marked inactive"})
+
+
 @mcp.custom_route("/agents", methods=["GET"])
 async def agents(request):
     names = registry.list_all()
@@ -127,6 +138,7 @@ async def agents(request):
                 "name": name,
                 "path": entry["path"] if entry else "",
                 "status": entry["status"] if entry else "unknown",
+                "last_seen": entry["last_seen"] if entry else 0,
                 "session_id": meta.get("session_id", ""),
                 "mailbox_count": queue.count(name),
             }

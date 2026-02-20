@@ -714,6 +714,57 @@
                 margin-top: 28px;
             }
 
+            /* ── reconnect overlay ── */
+            .reconnect-overlay {
+                position: fixed;
+                top: 0;
+                left: 0;
+                right: 0;
+                bottom: 0;
+                background: rgba(10, 10, 10, 0.85);
+                display: flex;
+                align-items: center;
+                justify-content: center;
+                z-index: 1000;
+                opacity: 0;
+                pointer-events: none;
+                transition: opacity 0.3s ease;
+            }
+
+            .reconnect-overlay.visible {
+                opacity: 1;
+                pointer-events: auto;
+            }
+
+            .reconnect-box {
+                text-align: center;
+            }
+
+            .reconnect-dot {
+                width: 8px;
+                height: 8px;
+                border-radius: 50%;
+                background: var(--red);
+                display: inline-block;
+                margin-bottom: 12px;
+                animation: pulse 1.5s ease-in-out infinite;
+            }
+
+            .reconnect-text {
+                font-size: 0.75rem;
+                font-weight: 500;
+                color: var(--t2);
+                letter-spacing: 0.1em;
+                text-transform: uppercase;
+            }
+
+            .reconnect-sub {
+                font-size: 0.6rem;
+                font-weight: 300;
+                color: var(--t3);
+                margin-top: 6px;
+            }
+
             /* ── keyframes ── */
             @keyframes pulse {
                 0%,
@@ -727,6 +778,13 @@
         </style>
     </head>
     <body>
+        <div class="reconnect-overlay" id="reconnect">
+            <div class="reconnect-box">
+                <div class="reconnect-dot"></div>
+                <div class="reconnect-text">bridge offline</div>
+                <div class="reconnect-sub">reconnecting...</div>
+            </div>
+        </div>
         <div class="shell">
             <div class="sidebar">
                 <div class="sidebar-header" id="home-btn">
@@ -826,6 +884,8 @@
                     contentJSON: "",
                     cachedTasks: [],
                     cachedPeek: null,
+                    connected: true,
+                    failCount: 0,
                 };
 
                 function txt(el, s) {
@@ -1004,14 +1064,37 @@
                     });
 
                 // polling
+                function setConnected(ok) {
+                    var overlay =
+                        document.getElementById("reconnect");
+                    var dot = document.getElementById("hd");
+                    if (ok) {
+                        state.failCount = 0;
+                        if (!state.connected) {
+                            state.connected = true;
+                            overlay.classList.remove("visible");
+                            // force refresh all data on reconnect
+                            state.agentsJSON = "";
+                            state.activityJSON = "";
+                            state.contentJSON = "";
+                        }
+                        dot.classList.add("on");
+                    } else {
+                        state.failCount++;
+                        dot.classList.remove("on");
+                        // show overlay after 2 consecutive failures
+                        if (state.failCount >= 2) {
+                            state.connected = false;
+                            overlay.classList.add("visible");
+                        }
+                    }
+                }
+
                 function pollHealth() {
                     return get("/health").then(function (d) {
-                        var dot = document.getElementById("hd");
-                        if (d && d.status === "ok") {
-                            dot.classList.add("on");
-                        } else {
-                            dot.classList.remove("on");
-                        }
+                        setConnected(
+                            d && d.status === "ok",
+                        );
                     });
                 }
 

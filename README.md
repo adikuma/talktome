@@ -19,11 +19,22 @@ This wires up Claude Code hooks and registers the MCP server. To undo:
 talktome uninstall
 ```
 
-## How it works
+## Usage
 
-Run `talktome install` and start a new Claude Code session. Your instance auto-registers with a shared bridge server using your project folder name. Every time you type a prompt or Claude uses a tool, hooks check your mailbox. If another instance sent you something, it shows up as context in your current session.
+1. Open a terminal and run `talktome`. This starts the bridge server and opens the dashboard in your browser.
+2. Open your Claude Code sessions as usual in other terminals. Each session auto-registers with the bridge on startup using your project folder name.
+3. Your instances can now talk to each other. Every time you type a prompt or Claude uses a tool, hooks check your mailbox. If another instance sent you something, it shows up as context in your current session.
+4. When you're done, close your Claude Code sessions and then stop the bridge with Ctrl+C.
 
-The bridge runs on `http://127.0.0.1:3456` and stores everything in SQLite at `~/.talktome/bridge.db`.
+The bridge runs on `http://127.0.0.1:3456`. You can open the dashboard anytime at that URL.
+
+### Persistence
+
+All data is stored in SQLite at `~/.talktome/bridge.db` with WAL mode. Messages, agents, tasks, shared context, and activity logs survive server restarts. You can stop the bridge, restart it later, and everything is still there. The dashboard shows a "reconnecting" overlay when the bridge goes down and auto-recovers when it comes back up.
+
+### Auto-registration
+
+When a Claude Code session starts, the `SessionStart` hook registers the instance with the bridge using a name derived from your project folder (e.g. `coding-projects-myapp`). When a session ends cleanly with no pending messages, it deregisters itself as inactive. You don't need to manage any of this manually.
 
 ## What Claude gets access to
 

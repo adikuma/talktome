@@ -249,6 +249,61 @@ async def test_context_get_rest_not_found(http_client):
 
 
 @pytest.mark.asyncio
+async def test_deregister_marks_inactive(http_client):
+    registry.register("backend", "/api")
+    assert registry.get("backend")["status"] == "active"
+    resp = await http_client.post("/deregister", json={"name": "backend"})
+    assert resp.status_code == 200
+    assert "inactive" in resp.json()["result"]
+    assert registry.get("backend")["status"] == "inactive"
+
+
+@pytest.mark.asyncio
+async def test_deregister_missing_name(http_client):
+    resp = await http_client.post("/deregister", json={"name": ""})
+    assert resp.status_code == 400
+
+
+@pytest.mark.asyncio
+async def test_deregister_preserves_agent(http_client):
+    registry.register("backend", "/api")
+    await http_client.post("/deregister", json={"name": "backend"})
+    # agent still exists, just inactive
+    assert registry.is_registered("backend")
+    entry = registry.get("backend")
+    assert entry["path"] == "/api"
+
+
+@pytest.mark.asyncio
+async def test_deregister_logs_activity(http_client):
+    registry.register("backend", "/api")
+    await http_client.post("/deregister", json={"name": "backend"})
+    resp = await http_client.get("/activity")
+    events = [e["event"] for e in resp.json()]
+    assert "deregister" in events
+
+
+@pytest.mark.asyncio
+async def test_agents_includes_last_seen(http_client):
+    registry.register("backend", "/api")
+    resp = await http_client.get("/agents")
+    data = resp.json()
+    assert len(data) == 1
+    assert "last_seen" in data[0]
+    assert data[0]["last_seen"] > 0
+
+
+@pytest.mark.asyncio
+async def test_agents_shows_inactive_status(http_client):
+    registry.register("backend", "/api")
+    registry.update_status("backend", "inactive")
+    resp = await http_client.get("/agents")
+    data = resp.json()
+    backend = [a for a in data if a["name"] == "backend"][0]
+    assert backend["status"] == "inactive"
+
+
+@pytest.mark.asyncio
 async def test_wait_for_reply_via_peek_and_read(http_client):
     registry.register("alice", "/a")
     registry.register("bob", "/b")

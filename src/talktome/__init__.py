@@ -199,18 +199,20 @@ def uninstall():
 
 
 # start the bridge server and open the dashboard
-def start():
+def start(open_browser=True):
     # if bridge already running just open browser and exit
     if is_running():
         print(f"talktome already running at {URL}")
-        webbrowser.open(URL)
+        if open_browser:
+            webbrowser.open(URL)
         return
 
     print(f"starting talktome on {URL}...")
 
     # open browser in a background thread once server is ready
-    opener = threading.Thread(target=wait_and_open, daemon=True)
-    opener.start()
+    if open_browser:
+        opener = threading.Thread(target=wait_and_open, daemon=True)
+        opener.start()
 
     # run the server in the foreground, blocks until interrupted
     from talktome.server import mcp
@@ -253,5 +255,7 @@ def main():
         from talktome.hooks import hook_mailbox
 
         hook_mailbox()
+    elif command == "--no-browser":
+        start(open_browser=False)
     else:
         start()

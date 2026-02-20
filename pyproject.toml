@@ -23,9 +23,14 @@ dev = [
     "httpx>=0.28.1",
     "pytest>=9.0.2",
     "pytest-asyncio>=1.3.0",
+    "pytest-playwright>=0.6.2",
     "ruff>=0.9.0",
     "pre-commit>=4.0.0",
 ]
+
+[tool.pytest.ini_options]
+asyncio_mode = "strict"
+markers = ["e2e: end to end tests (run separately with -m e2e)"]
 
 [tool.ruff]
 target-version = "py311"
